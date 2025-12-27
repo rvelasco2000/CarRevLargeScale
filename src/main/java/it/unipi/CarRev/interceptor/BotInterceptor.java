@@ -17,12 +17,12 @@ public class BotInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request,HttpServletResponse response,Object handler)throws IOException {
-        String idUser=request.getRemoteAddr();
+            String idUser = request.getRemoteAddr();
 
-        if(botDetectionService.checkForBot(idUser)){
-            response.sendError(HttpServletResponse.SC_FORBIDDEN,"Too many request, you have been blocked for 24H");
-            return false;
-        }
+            if (!botDetectionService.checkForBot(idUser)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Too many request, you have been blocked for 24H");
+                return false;
+            }
         return true;
     }
 

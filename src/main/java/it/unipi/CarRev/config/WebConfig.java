@@ -16,16 +16,17 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry){
-        registry.addInterceptor(botInterceptor)
-                .addPathPatterns("/**")
-                .excludePathPatterns( /*exclude all the pattern of open-api for running it correctly*/
-                    "/v3/api-docs/**",
-                    "/v3/api-docs",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/favicon.ico",
-                        "/error"
-                );
+       registry.addInterceptor(botInterceptor)
+             .addPathPatterns("/**")
+             .excludePathPatterns( /*exclude all the pattern of open-api for running it correctly*/
+                "/v3/api-docs/**",
+                "/v3/api-docs",
+                "/swagger-ui/**",
+                "/swagger-ui.html",
+                "/favicon.ico",
+                "/error"
+            );
+
 
     }
 
