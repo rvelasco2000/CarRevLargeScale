@@ -13,7 +13,7 @@ import java.util.Map;
 
 @Service
 public class AuthServiceImpl implements AuthService {
-
+    private final BotDetectionService botDetectionService;
     private final UserDAO userDAO;
     private final RefreshTokenDAO refreshTokenDAO;
     private final PasswordEncoder passwordEncoder;
@@ -23,12 +23,13 @@ public class AuthServiceImpl implements AuthService {
             UserDAO userDAO,
             RefreshTokenDAO refreshTokenDAO,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService
-    ) {
+            JwtService jwtService,
+            BotDetectionService botDetectionService) {
         this.userDAO = userDAO;
         this.refreshTokenDAO = refreshTokenDAO;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.botDetectionService=botDetectionService;
     }
 
     @Override
@@ -53,13 +54,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginResponse login(String username, String password) {
+    public LoginResponse login(String username, String password,String ip) {
         User user = userDAO.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new RuntimeException("Invalid credentials");
         }
+        botDetectionService.mapIpToUsername(user.getUsername(),ip);
 
         return issueTokens(user);
     }
