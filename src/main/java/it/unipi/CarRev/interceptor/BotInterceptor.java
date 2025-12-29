@@ -24,23 +24,26 @@ public class BotInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request,HttpServletResponse response,Object handler)throws IOException {
-        Authentication auth= SecurityContextHolder.getContext().getAuthentication();
-        String idUser;
-        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
-            idUser=auth.getName();
-        }
-        else{
-            idUser=request.getHeader("X-Forwarded-For");
-            if(idUser==null||idUser.isEmpty())
-            {
-                idUser = request.getRemoteAddr();
-            }
-        }
+
+        String idUser=getIdUser(request);
         if (!botDetectionService.checkForBot(idUser)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Too many request, you have been blocked for 24H");
             return false;
         }
         return true;
+    }
+    private static String getIdUser(HttpServletRequest request){
+        Authentication auth=SecurityContextHolder.getContext().getAuthentication();
+        String idUser;
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+            return auth.getName();
+        }
+            idUser=request.getHeader("X-Forwarded-For");
+            if(idUser==null||idUser.isEmpty())
+            {
+                idUser = request.getRemoteAddr();
+            }
+            return idUser;
     }
 
 }
