@@ -6,7 +6,7 @@ public interface AuthService {
 
     LoginResponse register(String username, String email, String password);
 
-    LoginResponse login(String username, String password);
+    LoginResponse login(String username, String password,String ip);
 
     LoginResponse refresh(String refreshToken);
 

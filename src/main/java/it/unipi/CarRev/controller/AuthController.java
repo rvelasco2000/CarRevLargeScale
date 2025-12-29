@@ -5,6 +5,7 @@ import it.unipi.CarRev.dto.LoginResponse;
 import it.unipi.CarRev.dto.RefreshRequest;
 import it.unipi.CarRev.dto.RegisterRequest;
 import it.unipi.CarRev.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,9 +29,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest req) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest req, HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty()) {
+            ip = request.getRemoteAddr();
+        }
         return ResponseEntity.ok(
-                authService.login(req.getUsername(), req.getPassword())
+                authService.login(req.getUsername(), req.getPassword(),ip)
         );
     }
 

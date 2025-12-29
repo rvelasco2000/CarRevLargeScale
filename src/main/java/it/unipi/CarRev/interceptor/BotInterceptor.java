@@ -14,7 +14,7 @@ import java.io.IOException;
 
 /**
  * class that allow us to intercept all the endpoints request and check
- * if the user is a legitimate or suspicius one
+ * if the user is a legitimate or suspicious one
  */
 @Component
 public class BotInterceptor implements HandlerInterceptor {
