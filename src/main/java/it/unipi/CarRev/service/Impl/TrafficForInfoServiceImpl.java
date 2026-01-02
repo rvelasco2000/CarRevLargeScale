@@ -1,0 +1,43 @@
+package it.unipi.CarRev.service.Impl;
+
+import it.unipi.CarRev.config.RedisConfig;
+import it.unipi.CarRev.dao.mongo.TrafficForAnalyticsDAO;
+import it.unipi.CarRev.model.TrafficForAnalytics;
+import it.unipi.CarRev.utils.UtilsForDate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisAccessor;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import redis.clients.jedis.Jedis;
+
+@Service
+public class TrafficForInfoServiceImpl {
+    @Autowired
+    TrafficForAnalyticsDAO trafficForAnalyticsDAO;
+
+    @Scheduled(cron="0 0 0 * * *")
+    public void dailyTrafficInfoTransfer(){
+        String yesterdayDate= UtilsForDate.getYesterdayDate();
+        String nOfLegitimateUserKey="TrafficLog:"+yesterdayDate+":legitimate";
+        String nOfSuspiciousUserKey="TrafficLog:"+yesterdayDate+":suspicious";
+        try(Jedis jedis= RedisConfig.getJedis()){
+            String nOfLegitimateUser=jedis.get(nOfLegitimateUserKey);
+            if(nOfLegitimateUser==null){
+                nOfLegitimateUser="0";
+            }
+            String nOfSuspiciousUser=jedis.get(nOfSuspiciousUserKey);
+            if(nOfSuspiciousUser==null){
+                nOfSuspiciousUser="0";
+            }
+            TrafficForAnalytics trafficForAnalytics=new TrafficForAnalytics(Integer.valueOf(nOfLegitimateUser),Integer.valueOf(nOfSuspiciousUser),yesterdayDate);
+            trafficForAnalyticsDAO.save(trafficForAnalytics);
+            jedis.del(nOfLegitimateUserKey);
+            jedis.del(nOfSuspiciousUser);
+            System.out.println("midnight migration between Redis and Mongodb has been successful");
+        }
+        catch(Exception e){
+            System.err.println("Error during midnight migration between Redis and Mongodb:"+e.getMessage());
+        }
+    }
+
+}
