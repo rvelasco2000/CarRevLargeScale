@@ -40,6 +40,7 @@ public class SecurityConfig {
                                 "/api/auth/refresh",
                                 "/api/auth/logout"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/cars").permitAll()
                         .anyRequest().authenticated()
                 )
                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
