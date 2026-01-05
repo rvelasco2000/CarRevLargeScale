@@ -1,7 +1,9 @@
 package it.unipi.CarRev.controller;
 
 import it.unipi.CarRev.dto.CarSearchResponse;
+import it.unipi.CarRev.dto.FullCarInfoDTO;
 import it.unipi.CarRev.service.CarSearchService;
+import it.unipi.CarRev.service.Impl.VisitACarService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,9 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class CarController {
 
     private final CarSearchService carSearchService;
+    private final VisitACarService visitACarService;
 
-    public CarController(CarSearchService carSearchService) {
+    public CarController(CarSearchService carSearchService, VisitACarService visitACarService) {
         this.carSearchService = carSearchService;
+        this.visitACarService = visitACarService;
     }
 
     @GetMapping
@@ -40,5 +44,13 @@ public class CarController {
                         size
                 )
         );
+    }
+    @GetMapping("/visitCar")
+    public ResponseEntity<FullCarInfoDTO> visitACar(@RequestParam(required = true) String id){
+        FullCarInfoDTO fullCarInfoDTO=visitACarService.getCarById(id);
+        if(fullCarInfoDTO==null){
+            ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(fullCarInfoDTO);
     }
 }
