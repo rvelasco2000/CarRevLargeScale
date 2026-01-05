@@ -18,6 +18,8 @@ public class TrafficForInfoServiceImpl {
     @Scheduled(cron="0 0 0 * * *")
     public void dailyTrafficInfoTransfer(){
         String yesterdayDate= UtilsForDate.getYesterdayDate();
+        //uncomment this to test the application
+        //String yesterdayDate=UtilsForDate.getDate();
         String nOfLegitimateUserKey="TrafficLog:"+yesterdayDate+":legitimate";
         String nOfSuspiciousUserKey="TrafficLog:"+yesterdayDate+":suspicious";
         try(Jedis jedis= RedisConfig.getJedis()){
@@ -32,7 +34,7 @@ public class TrafficForInfoServiceImpl {
             TrafficForAnalytics trafficForAnalytics=new TrafficForAnalytics(Integer.valueOf(nOfLegitimateUser),Integer.valueOf(nOfSuspiciousUser),yesterdayDate);
             trafficForAnalyticsDAO.save(trafficForAnalytics);
             jedis.del(nOfLegitimateUserKey);
-            jedis.del(nOfSuspiciousUser);
+            jedis.del(nOfSuspiciousUserKey);
             System.out.println("midnight migration between Redis and Mongodb has been successful");
         }
         catch(Exception e){

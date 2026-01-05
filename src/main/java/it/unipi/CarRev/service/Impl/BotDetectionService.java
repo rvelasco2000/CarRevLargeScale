@@ -10,7 +10,9 @@ public class BotDetectionService {
 
     private static final int EXPIRESTATUSKEY=86400; /*the key will expire after a day*/
     private static final int EXPIRENOFVISITEDPAGES=1; /*change this if not working*/
+    //private static final int EXPIRENOFVISITEDPAGES=600; //uncomment this and comment the one above for testing
     private static final int TRESHOLD=100;
+    //private static final int TRESHOLD=4; //uncomment this and comment the one above for testing
     public Boolean checkForBot(String idUser){
         String statusKey="TrafficLog:"+idUser+":status";
         String nOfVisitedPagesKey="TrafficLog:"+idUser+":numberOfVisitedPages";
