@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.core.util.RecyclerPool;
 
 @RestController
 @RequestMapping("/api/cars")
@@ -53,4 +54,7 @@ public class CarController {
         }
         return ResponseEntity.ok(fullCarInfoDTO);
     }
+    /*
+    @GetMapping("/logged/lastFive")
+    public ResponseEntity<>*/
 }
