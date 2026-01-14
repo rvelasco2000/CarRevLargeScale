@@ -15,9 +15,9 @@ public class FrontPageCarSummaryDTO {
 
     public FrontPageCarSummaryDTO(){};
 
-    public FrontPageCarSummaryDTO(String carBrand, String id, String carModel, Double generalRating, String fuelType, String bodyType) {
-        this.carBrand = carBrand;
+    public FrontPageCarSummaryDTO(String id,String carBrand, String carModel, Double generalRating, String fuelType, String bodyType) {
         this.id = id;
+        this.carBrand = carBrand;
         this.carModel = carModel;
         this.generalRating = generalRating;
         this.fuelType = fuelType;
