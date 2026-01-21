@@ -3,8 +3,12 @@ package it.unipi.CarRev.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 
 @Document(collection = "users")
 public class User {
@@ -31,7 +35,6 @@ public class User {
         this.isAdmin = isAdmin;
         this.createdAt = Instant.now();
     }
-
     public String getId() { return id; }
     public String getUsername() { return username; }
     public String getEmail() { return email; }
