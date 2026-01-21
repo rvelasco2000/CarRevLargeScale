@@ -1,8 +1,11 @@
 package it.unipi.CarRev.controller;
 
 import it.unipi.CarRev.dto.CarSearchResponse;
+import it.unipi.CarRev.dto.CarSummaryDTO;
+import it.unipi.CarRev.dto.FrontPageCarSummaryDTO;
 import it.unipi.CarRev.dto.FullCarInfoDTO;
 import it.unipi.CarRev.service.CarSearchService;
+import it.unipi.CarRev.service.Impl.LastFiveCarServiceImplementation;
 import it.unipi.CarRev.service.Impl.VisitACarService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,16 +14,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.core.util.RecyclerPool;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/cars")
 public class CarController {
 
     private final CarSearchService carSearchService;
     private final VisitACarService visitACarService;
+    private final LastFiveCarServiceImplementation lastFiveCarServiceImplementation;
 
-    public CarController(CarSearchService carSearchService, VisitACarService visitACarService) {
+    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation) {
         this.carSearchService = carSearchService;
         this.visitACarService = visitACarService;
+        this.lastFiveCarServiceImplementation=lastFiveCarServiceImplementation;
     }
 
     @GetMapping
@@ -54,7 +61,11 @@ public class CarController {
         }
         return ResponseEntity.ok(fullCarInfoDTO);
     }
-    /*
+    //remember to lock this in the security config
     @GetMapping("/logged/lastFive")
-    public ResponseEntity<>*/
+    public ResponseEntity<List<FrontPageCarSummaryDTO>> lastFiveCar(){
+        List<FrontPageCarSummaryDTO> lastCars=lastFiveCarServiceImplementation.getLastFiveCar();
+        return ResponseEntity.ok(lastCars);
+
+    }
 }
