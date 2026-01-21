@@ -44,6 +44,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/api/cars",
                                 "/api/cars/visitCar").permitAll()
+                        .requestMatchers("/api/cars/logged/lastFive").authenticated()
+
                         .anyRequest().authenticated()
                 )
                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

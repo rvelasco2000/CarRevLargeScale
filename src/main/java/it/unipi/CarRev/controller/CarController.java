@@ -2,6 +2,7 @@ package it.unipi.CarRev.controller;
 
 import it.unipi.CarRev.dto.CarSearchResponse;
 import it.unipi.CarRev.dto.CarSummaryDTO;
+import it.unipi.CarRev.dto.FrontPageCarSummaryDTO;
 import it.unipi.CarRev.dto.FullCarInfoDTO;
 import it.unipi.CarRev.service.CarSearchService;
 import it.unipi.CarRev.service.Impl.LastFiveCarServiceImplementation;
@@ -21,11 +22,12 @@ public class CarController {
 
     private final CarSearchService carSearchService;
     private final VisitACarService visitACarService;
-    private LastFiveCarServiceImplementation lastFiveCarServiceImplementation;
+    private final LastFiveCarServiceImplementation lastFiveCarServiceImplementation;
 
-    public CarController(CarSearchService carSearchService, VisitACarService visitACarService) {
+    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation) {
         this.carSearchService = carSearchService;
         this.visitACarService = visitACarService;
+        this.lastFiveCarServiceImplementation=lastFiveCarServiceImplementation;
     }
 
     @GetMapping
@@ -61,8 +63,8 @@ public class CarController {
     }
     //remember to lock this in the security config
     @GetMapping("/logged/lastFive")
-    public ResponseEntity<List<CarSummaryDTO>> lastFiveCar(){
-        List<CarSummaryDTO> lastCars=lastFiveCarServiceImplementation.getLastFiveCar();
+    public ResponseEntity<List<FrontPageCarSummaryDTO>> lastFiveCar(){
+        List<FrontPageCarSummaryDTO> lastCars=lastFiveCarServiceImplementation.getLastFiveCar();
         return ResponseEntity.ok(lastCars);
 
     }

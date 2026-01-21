@@ -1,7 +1,7 @@
 package it.unipi.CarRev.service.Impl;
 
 import it.unipi.CarRev.config.RedisConfig;
-import it.unipi.CarRev.dto.CarSummaryDTO;
+import it.unipi.CarRev.dto.FrontPageCarSummaryDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -11,7 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import redis.clients.jedis.Jedis;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,9 +20,12 @@ import java.util.List;
 public class LastFiveCarServiceImplementation {
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
+    public LastFiveCarServiceImplementation(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
-    public List<CarSummaryDTO> getLastFiveCar(){
+    public List<FrontPageCarSummaryDTO> getLastFiveCar(){
         Authentication auth= SecurityContextHolder.getContext().getAuthentication();
         if(auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)){
             String username=auth.getName();
@@ -32,15 +35,15 @@ public class LastFiveCarServiceImplementation {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,"you must log in to see the last 5 visited cars");
         }
     }
-    private List<CarSummaryDTO> getCars(String username){
-        String key="User:"+username+"recentCar";
-        List<CarSummaryDTO> lastCars=new ArrayList<>();
+    private List<FrontPageCarSummaryDTO> getCars(String username){
+        String key="User:"+username+":recentCar";
+        List<FrontPageCarSummaryDTO> lastCars=new ArrayList<>();
         try(Jedis jedis= RedisConfig.getJedis()){
             List<String> jsonList=jedis.lrange(key,0,4);
             if(jsonList!=null){
                 for(String jsonElem:jsonList){
                     try{
-                        CarSummaryDTO car=objectMapper.readValue(jsonElem,CarSummaryDTO.class);
+                        FrontPageCarSummaryDTO car=objectMapper.readValue(jsonElem,FrontPageCarSummaryDTO.class);
                         lastCars.add(car);
                     }
                     catch (Exception e){
