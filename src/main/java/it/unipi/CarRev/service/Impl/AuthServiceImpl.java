@@ -9,6 +9,7 @@ import it.unipi.CarRev.service.AuthService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -82,7 +83,6 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userDAO.findByUsername(usernameFromToken)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         String newAccess = jwtService.generateAccessToken(
                 user.getUsername(),
                 Map.of("isAdmin", user.isAdmin())
