@@ -1,13 +1,16 @@
 package it.unipi.CarRev.service.Impl;
 
 import it.unipi.CarRev.config.JwtService;
+import it.unipi.CarRev.config.RedisConfig;
 import it.unipi.CarRev.dao.mongo.UserDAO;
 import it.unipi.CarRev.dao.redis.RefreshTokenDAO;
 import it.unipi.CarRev.dto.LoginResponse;
 import it.unipi.CarRev.model.User;
 import it.unipi.CarRev.service.AuthService;
+import it.unipi.CarRev.utils.UtilsForDate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import redis.clients.jedis.Jedis;
 
 import java.util.List;
 import java.util.Map;
@@ -51,7 +54,17 @@ public class AuthServiceImpl implements AuthService {
         user.setAdmin(false);
 
         user = userDAO.save(user);
+        updateRegisteredUser();
         return issueTokens(user);
+    }
+    private void updateRegisteredUser(){
+        try(Jedis jedis= RedisConfig.getJedis()){
+            String key="TrafficLog:"+ UtilsForDate.getDate()+":nOfRegisteredUser";
+            jedis.incr(key);
+        }
+        catch(Exception e){
+            System.err.println("Error during the update of the number of registered user in redis");
+        }
     }
 
     @Override

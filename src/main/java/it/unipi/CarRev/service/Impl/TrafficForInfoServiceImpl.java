@@ -2,7 +2,9 @@ package it.unipi.CarRev.service.Impl;
 
 import it.unipi.CarRev.config.RedisConfig;
 import it.unipi.CarRev.dao.mongo.TrafficForAnalyticsDAO;
+import it.unipi.CarRev.dao.mongo.UserBasedAnalyticsDAO;
 import it.unipi.CarRev.model.TrafficForAnalytics;
+import it.unipi.CarRev.model.UserBasedAnalytics;
 import it.unipi.CarRev.utils.UtilsForDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisAccessor;
@@ -14,6 +16,8 @@ import redis.clients.jedis.Jedis;
 public class TrafficForInfoServiceImpl {
     @Autowired
     TrafficForAnalyticsDAO trafficForAnalyticsDAO;
+    @Autowired
+    UserBasedAnalyticsDAO userBasedAnalyticsDAO;
 
     @Scheduled(cron="0 0 0 * * *")
     public void dailyTrafficInfoTransfer(){
@@ -22,6 +26,7 @@ public class TrafficForInfoServiceImpl {
         //String yesterdayDate=UtilsForDate.getDate();
         String nOfLegitimateUserKey="TrafficLog:"+yesterdayDate+":legitimate";
         String nOfSuspiciousUserKey="TrafficLog:"+yesterdayDate+":suspicious";
+        String nOfRegisteredUserKey="TrafficLog:"+yesterdayDate+":nOfRegisteredUser";
         try(Jedis jedis= RedisConfig.getJedis()){
             String nOfLegitimateUser=jedis.get(nOfLegitimateUserKey);
             if(nOfLegitimateUser==null){
@@ -31,10 +36,18 @@ public class TrafficForInfoServiceImpl {
             if(nOfSuspiciousUser==null){
                 nOfSuspiciousUser="0";
             }
+            String nOfRegisteredUser=jedis.get(nOfRegisteredUserKey);
+            if(nOfRegisteredUser==null){
+                nOfRegisteredUser="0";
+            }
+
             TrafficForAnalytics trafficForAnalytics=new TrafficForAnalytics(Integer.valueOf(nOfLegitimateUser),Integer.valueOf(nOfSuspiciousUser),yesterdayDate);
+            UserBasedAnalytics userBasedAnalytics=new UserBasedAnalytics(Integer.valueOf(nOfRegisteredUser),yesterdayDate);
             trafficForAnalyticsDAO.save(trafficForAnalytics);
+            userBasedAnalyticsDAO.save(userBasedAnalytics);
             jedis.del(nOfLegitimateUserKey);
             jedis.del(nOfSuspiciousUserKey);
+            jedis.del(nOfRegisteredUserKey);
             System.out.println("midnight migration between Redis and Mongodb has been successful");
         }
         catch(Exception e){
