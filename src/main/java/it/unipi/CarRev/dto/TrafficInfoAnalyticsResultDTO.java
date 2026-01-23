@@ -8,5 +8,6 @@ public class TrafficInfoAnalyticsResultDTO {
     private String period;
     private Integer totalLegitimateUsersForPeriod;
     private Integer totalSuspiciousUsersForPeriod;
+    private Double ratio;
 
 }

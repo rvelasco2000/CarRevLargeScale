@@ -37,11 +37,22 @@ public class TrafficAnalyticsDWMYServiceImplementation {
                 .sum("nOfLegitimateUsers").as("totalLegitimateUsersForPeriod")
                 .sum("nOfSuspiciousUsers").as("totalSuspiciousUsersForPeriod")
                 .first("periodGroup").as("period");
+        ProjectionOperation getRatio=Aggregation.project("period","totalLegitimateUsersForPeriod","totalSuspiciousUsersForPeriod")
+                .and(
+                        ArithmeticOperators.Multiply.valueOf(
+                                ArithmeticOperators.Divide.valueOf("totalSuspiciousUsersForPeriod")
+                                        .divideBy(ConditionalOperators.when(Criteria.where("totalLegitimateUsersForPeriod").is(0))
+                                                .then(1)
+                                                .otherwise("$totalLegitimateUsersForPeriod")
+                                        )
+                        ).multiplyBy(100)
+                ).as("ratio");
         SortOperation sort=Aggregation.sort(org.springframework.data.domain.Sort.Direction.ASC, "period");
         Aggregation aggregation=Aggregation.newAggregation(
                 filter,
                 project,
                 group,
+                getRatio,
                 sort
         );
         System.out.println("DEBUG: documents for traffic info analytics:"+mongoTemplate.aggregate(aggregation,"TrafficForAnalytics",TrafficInfoAnalyticsResultDTO .class).getMappedResults());
