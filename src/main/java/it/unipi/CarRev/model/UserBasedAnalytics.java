@@ -19,10 +19,13 @@ public class UserBasedAnalytics {
     @Getter@Setter
     private Integer nOfRegisteredUsers;
     @Getter@Setter
+    private Integer nOfUnregisteredUsers;
+    @Getter@Setter
     private String date;
 
-    public UserBasedAnalytics(Integer nOfRegisteredUsers,String date){
+    public UserBasedAnalytics(Integer nOfRegisteredUsers,Integer nOfUnregisteredUsers,String date){
         this.nOfRegisteredUsers=nOfRegisteredUsers;
+        this.nOfUnregisteredUsers=nOfUnregisteredUsers;
         this.date=date;
     }
 
