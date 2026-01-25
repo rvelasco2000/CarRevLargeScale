@@ -12,4 +12,6 @@ public class UserBasedAnalyticsResponseDTO {
     private double registeredUsersTrend;
     @Getter@Setter
     private double unregisteredVisitorsTrend;
+    @Getter@Setter
+    private String period;
 }

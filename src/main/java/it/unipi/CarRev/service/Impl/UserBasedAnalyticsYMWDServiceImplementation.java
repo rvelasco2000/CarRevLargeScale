@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.stylesheets.LinkStyle;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -37,8 +38,13 @@ public class UserBasedAnalyticsYMWDServiceImplementation {
                 endDate=targetDate.withDayOfMonth(targetDate.lengthOfMonth());
             }
             case WEEKLY -> {
-                startDate=targetDate.minusWeeks(1).minusDays(targetDate.getDayOfWeek().getValue()-1);
-                endDate=targetDate.plusDays(7-targetDate.getDayOfWeek().getValue());
+                //startDate=targetDate.minusWeeks(1).minusDays(targetDate.getDayOfWeek().getValue()-1);
+                startDate=targetDate.minusWeeks(1).with(DayOfWeek.MONDAY);
+                System.out.println("DEBUG:weekly start date:"+startDate);
+                //endDate=targetDate.plusDays(7-targetDate.getDayOfWeek().getValue());
+                endDate=targetDate.with(DayOfWeek.SUNDAY);
+                System.out.println("DEBUG:weekly end date:"+endDate);
+
             }
             case DAILY -> {
                 startDate=targetDate.minusDays(1);
@@ -54,7 +60,7 @@ public class UserBasedAnalyticsYMWDServiceImplementation {
                 ).toString(period.format)).as("periodGroup");
         GroupOperation group=Aggregation.group("periodGroup")
                 .sum("nOfRegisteredUsers").as("totalRegisteredUsers")
-                .sum("nOfUnregisteredUsers").as("nOfUnregisteredUsers")
+                .sum("nOfUnregisteredUsers").as("totalUnregisteredVisitors")
                 .first("periodGroup").as("period");
         SortOperation sort=Aggregation.sort(org.springframework.data.domain.Sort.Direction.ASC, "period");
         Aggregation aggregation=Aggregation.newAggregation(
@@ -66,6 +72,9 @@ public class UserBasedAnalyticsYMWDServiceImplementation {
         List<UserBasedAnalyticsResponseDTO> results=mongoTemplate.aggregate(aggregation,"UserBasedAnalytics", UserBasedAnalyticsResponseDTO.class).getMappedResults();
         System.out.println("DEBUG: documents for traffic info analytics:"+results);
         getTrends(results);
+        results.forEach(r -> System.out.println("Periodo: " + r.getPeriod() +
+                " Reg: " + r.getTotalRegisteredUsers() +
+                " Unreg: " + r.getTotalUnregisteredVisitors()));
         return results.get(results.size()-1);
     }
 
