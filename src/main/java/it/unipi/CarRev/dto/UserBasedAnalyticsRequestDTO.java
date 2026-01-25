@@ -11,7 +11,7 @@ import lombok.Setter;
 
 public class UserBasedAnalyticsRequestDTO {
     @Getter@Setter
-    @NotBlank
+    @NotNull(message="this field cannot be null")
     @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "the date must be in the format YYYY-MM-dd")
     private String date;
     @NotNull(message = "this field cannot be null")

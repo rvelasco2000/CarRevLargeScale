@@ -3,6 +3,7 @@ package it.unipi.CarRev.controller;
 import it.unipi.CarRev.dto.TrafficInfoAnalyticsRequestDTO;
 import it.unipi.CarRev.dto.TrafficInfoAnalyticsResultDTO;
 import it.unipi.CarRev.service.Impl.TrafficAnalyticsDWMYServiceImplementation;
+import it.unipi.CarRev.service.Impl.UserBasedAnalyticsYMWDServiceImplementation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,10 +16,13 @@ import java.util.List;
 @RequestMapping("/api/admin/analytics")
 public class AnalyticsController {
     private TrafficAnalyticsDWMYServiceImplementation trafficAnalyticsDWMYServiceImplementation;
+    private UserBasedAnalyticsYMWDServiceImplementation userBasedAnalyticsYMWDServiceImplementation;
     @Autowired
-    public AnalyticsController(TrafficAnalyticsDWMYServiceImplementation trafficAnalyticsDWMYServiceImplementation){
+    public AnalyticsController(TrafficAnalyticsDWMYServiceImplementation trafficAnalyticsDWMYServiceImplementation,UserBasedAnalyticsYMWDServiceImplementation userBasedAnalyticsYMWDServiceImplementation){
+        this.userBasedAnalyticsYMWDServiceImplementation=userBasedAnalyticsYMWDServiceImplementation;
         this.trafficAnalyticsDWMYServiceImplementation=trafficAnalyticsDWMYServiceImplementation;
     }
+
 
     @PostMapping("/trafficInfo")
     public ResponseEntity<?> getAnalytics(@Valid @RequestBody TrafficInfoAnalyticsRequestDTO requestDTO){ //the date must follow the YYYY-MM-dd format
