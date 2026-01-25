@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -26,8 +27,32 @@ public class TrafficAnalyticsDWMYServiceImplementation {
     }
 
     public List<TrafficInfoAnalyticsResultDTO> getTrafficInfoAnalytics(String startDate, String endDate, DateEnum period){
+        LocalDate targetStart=LocalDate.parse(startDate);
+        LocalDate targetEnd=LocalDate.parse(endDate);
+        LocalDate newStartDate=LocalDate.ofEpochDay(0);
+        LocalDate newEndDate=LocalDate.ofEpochDay(0);
+        switch (period){
+            case YEARLY -> {
+                newStartDate=targetStart.withDayOfYear(1);
+                newEndDate=targetEnd.withDayOfYear(targetEnd.lengthOfYear());
+            }
+            case MONTHLY-> {
+                newStartDate=targetStart.withDayOfMonth(1);
+                newEndDate=targetEnd.withDayOfMonth(targetEnd.lengthOfMonth());
+            }
+            case WEEKLY -> {
+                newStartDate=targetStart.with(DayOfWeek.MONDAY);
+                newEndDate=targetEnd.with(DayOfWeek.SUNDAY);
+            }
+            case DAILY -> {
+                newStartDate=targetStart;
+                newEndDate=targetEnd;
+            }
+        }
+        System.out.println("DEBUG: Traffic analytics start date:"+newStartDate+" end date:"+newEndDate);
+
         MatchOperation filter= Aggregation.match(
-                Criteria.where("date").gte(startDate).lte(endDate)
+                Criteria.where("date").gte(newStartDate.toString()).lte(newEndDate.toString())
         );
 
         ProjectionOperation project = Aggregation.project("nOfLegitimateUsers", "nOfSuspiciousUsers")
