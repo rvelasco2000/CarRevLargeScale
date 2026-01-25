@@ -5,8 +5,13 @@ import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.params.SetParams;
+
+import java.util.regex.Pattern;
+
 @Service
 public class BotDetectionService {
+    private final Pattern IPV6REGEX=Pattern.compile("^(([0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|:(:[0-9a-fA-F]{1,4}){1,7})$");
+    private final Pattern IPV4REGEX= Pattern.compile("^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})$");
 
     private static final int EXPIRESTATUSKEY=86400; /*the key will expire after a day*/
    private static final int EXPIRENOFVISITEDPAGES=1; /*change this if not working*/
@@ -18,6 +23,7 @@ public class BotDetectionService {
         String nOfVisitedPagesKey="TrafficLog:"+idUser+":numberOfVisitedPages";
         String nOfLegitimateUserKey="TrafficLog:"+ UtilsForDate.getDate()+":legitimate";
         String nOfSuspiciusUserKey="TrafficLog:"+UtilsForDate.getDate()+":suspicious";
+        String nOfUnregisteredVisitorKey="TrafficLog:"+UtilsForDate.getDate()+":numberOfUnregisteredUsers";
         try(Jedis jedis=RedisConfig.getJedis()){
             String currentStatus=jedis.get(statusKey);
             if(currentStatus!=null && currentStatus.equals("suspicious")){
@@ -28,6 +34,9 @@ public class BotDetectionService {
             String statusKeyCreated=jedis.set(statusKey,"legitimate", SetParams.setParams().nx().ex(EXPIRESTATUSKEY));
             if(statusKeyCreated!=null){
                 jedis.incr(nOfLegitimateUserKey);
+                if(isIP(idUser)){
+                    jedis.incr(nOfUnregisteredVisitorKey);
+                }
             }
             String nOfVisitedPagePresent= jedis.set(nOfVisitedPagesKey,"0", SetParams.setParams().nx().ex(EXPIRENOFVISITEDPAGES));
             Long currentValue=jedis.incr(nOfVisitedPagesKey);
@@ -49,6 +58,7 @@ public class BotDetectionService {
         String oldNOfVisitedPagesKey="TrafficLog:"+ip+":numberOfVisitedPages";
         String newStatusKey="TrafficLog:"+username+":status";
         String newNOfVisitedPagesKey="TrafficLog:"+username+":numberOfVisitedPages";
+        String nOfUnregisteredVisitorKey="TrafficLog:"+UtilsForDate.getDate()+":numberOfUnregisteredUsers";
         try(Jedis jedis=RedisConfig.getJedis()){
             if(jedis.exists(oldStatusKey)){
                 jedis.rename(oldStatusKey,newStatusKey);
@@ -56,9 +66,18 @@ public class BotDetectionService {
             if(jedis.exists(oldNOfVisitedPagesKey)){
                 jedis.rename(oldNOfVisitedPagesKey,newNOfVisitedPagesKey);
             }
+            if(jedis.exists(nOfUnregisteredVisitorKey)){
+                jedis.decr(nOfUnregisteredVisitorKey);
+            }
         }
         catch(Exception e){
             System.err.println("error during the renaming of the redis key:"+e.getMessage());
         }
+    }
+    private  boolean isIP(String id){
+        if(IPV4REGEX.matcher(id).matches()||IPV6REGEX.matcher(id).matches()){
+            return true;
+        }
+        return false;
     }
 }

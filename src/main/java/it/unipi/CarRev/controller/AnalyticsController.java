@@ -2,8 +2,12 @@ package it.unipi.CarRev.controller;
 
 import it.unipi.CarRev.dto.TrafficInfoAnalyticsRequestDTO;
 import it.unipi.CarRev.dto.TrafficInfoAnalyticsResultDTO;
+import it.unipi.CarRev.dto.UserBasedAnalyticsRequestDTO;
+import it.unipi.CarRev.dto.UserBasedAnalyticsResponseDTO;
 import it.unipi.CarRev.service.Impl.TrafficAnalyticsDWMYServiceImplementation;
+import it.unipi.CarRev.service.Impl.UserBasedAnalyticsYMWDServiceImplementation;
 import jakarta.validation.Valid;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +19,23 @@ import java.util.List;
 @RequestMapping("/api/admin/analytics")
 public class AnalyticsController {
     private TrafficAnalyticsDWMYServiceImplementation trafficAnalyticsDWMYServiceImplementation;
+    private UserBasedAnalyticsYMWDServiceImplementation userBasedAnalyticsYMWDServiceImplementation;
     @Autowired
-    public AnalyticsController(TrafficAnalyticsDWMYServiceImplementation trafficAnalyticsDWMYServiceImplementation){
+    public AnalyticsController(TrafficAnalyticsDWMYServiceImplementation trafficAnalyticsDWMYServiceImplementation,UserBasedAnalyticsYMWDServiceImplementation userBasedAnalyticsYMWDServiceImplementation){
+        this.userBasedAnalyticsYMWDServiceImplementation=userBasedAnalyticsYMWDServiceImplementation;
         this.trafficAnalyticsDWMYServiceImplementation=trafficAnalyticsDWMYServiceImplementation;
+    }
+    @PostMapping("/userAnalytics")
+    public ResponseEntity<?> getUserAnalytics(@Valid@RequestBody UserBasedAnalyticsRequestDTO requestDTO){
+        LocalDate date=LocalDate.parse(requestDTO.getDate());
+        if(date.isAfter(LocalDate.now())){
+            return ResponseEntity.badRequest().body("ERROR:the date in the request is in the future");
+        }
+        UserBasedAnalyticsResponseDTO responseDTO=userBasedAnalyticsYMWDServiceImplementation.getUsersAnalytics(
+          requestDTO.getDate(),
+          requestDTO.getPeriod()
+        );
+        return ResponseEntity.ok(responseDTO);
     }
 
     @PostMapping("/trafficInfo")

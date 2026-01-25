@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.redis.core.index.Indexed;
 
 /***
  * this will be used for storing the information useful for the number of registered user and the unregistered visitor
@@ -19,10 +20,13 @@ public class UserBasedAnalytics {
     @Getter@Setter
     private Integer nOfRegisteredUsers;
     @Getter@Setter
+    private Integer nOfUnregisteredUsers;
+    @Getter@Setter@Indexed
     private String date;
 
-    public UserBasedAnalytics(Integer nOfRegisteredUsers,String date){
+    public UserBasedAnalytics(Integer nOfRegisteredUsers,Integer nOfUnregisteredUsers,String date){
         this.nOfRegisteredUsers=nOfRegisteredUsers;
+        this.nOfUnregisteredUsers=nOfUnregisteredUsers;
         this.date=date;
     }
 
