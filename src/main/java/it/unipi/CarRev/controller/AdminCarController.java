@@ -2,16 +2,14 @@ package it.unipi.CarRev.controller;
 
 import it.unipi.CarRev.dto.CarCreateRequestDTO;
 import it.unipi.CarRev.dto.CarUpdateRequestDTO;
+import it.unipi.CarRev.service.Impl.DeleteACarServiceImpl;
 import it.unipi.CarRev.service.Impl.InsertNewCarServiceImpl;
 import it.unipi.CarRev.service.Impl.ProductYearRecomputeService;
 import it.unipi.CarRev.service.Impl.UpdateCarServiceImpl;
 import jakarta.validation.Valid;
 import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -22,10 +20,12 @@ public class AdminCarController {
     private final ProductYearRecomputeService productYearRecomputeService;
     private final InsertNewCarServiceImpl insertNewCarService;
     private final UpdateCarServiceImpl updateCarService;
-    public AdminCarController(ProductYearRecomputeService productYearRecomputeService, InsertNewCarServiceImpl insertNewCarService, UpdateCarServiceImpl updateCarService){
+    private final DeleteACarServiceImpl deleteACarService;
+    public AdminCarController(ProductYearRecomputeService productYearRecomputeService, InsertNewCarServiceImpl insertNewCarService, UpdateCarServiceImpl updateCarService,DeleteACarServiceImpl deleteACarService){
         this.productYearRecomputeService = productYearRecomputeService;
         this.insertNewCarService=insertNewCarService;
         this.updateCarService=updateCarService;
+        this.deleteACarService=deleteACarService;
     }
 
     @PostMapping("/insert")
@@ -55,6 +55,29 @@ public class AdminCarController {
                 return ResponseEntity.ok("car has been successfully updated");
         }
         return ResponseEntity.internalServerError().body("an error has occurred during the update of a car");
+    }
+
+    /***
+     * TODO when deleting a car i must delete also in the last 5 visited, to do so when i visit a car if that car
+     * does not exists i check in the user last 5 and delete it
+     * we will also need to address neo4j consistency
+     * @param id
+     * @return
+     */
+    @PostMapping("/delete")
+    public ResponseEntity<String> deleteCar(@RequestParam(required = true) String id){
+        int results=deleteACarService.deleteCar(id);
+        switch(results){
+            case -1:
+                return ResponseEntity.notFound().build();
+            case -2:
+                return ResponseEntity.internalServerError().body("an error has occurred during the delete of a car");
+            case 0:
+                return ResponseEntity.ok("car has been successfully deleted");
+        }
+        return ResponseEntity.internalServerError().body("an error has occurred during the delete of a car");
+
+
     }
     @PostMapping("/recompute-product-year")
     public ResponseEntity<Map<String, Object>> recomputeProductYear() {
