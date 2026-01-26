@@ -59,6 +59,27 @@ public class Car {
     @Field("productYear")
     private List<?> productYear;
 
+    public Car(String carName, String carBrand, String carModel, String bodyType, String driveWheels, Integer engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<String> topTenReview, List<String> otherReview, List<String> sales, Long views, List<?> productYear) {
+        this.carName = carName;
+        this.carBrand = carBrand;
+        this.carModel = carModel;
+        this.bodyType = bodyType;
+        this.driveWheels = driveWheels;
+        this.engineDisplacement = engineDisplacement;
+        this.numberOfCylinders = numberOfCylinders;
+        this.transmissionType = transmissionType;
+        this.horsePower = horsePower;
+        this.fuelType = fuelType;
+        this.seatCapacity = seatCapacity;
+        this.priceNew = priceNew;
+        this.generalRating = generalRating;
+        this.topTenReview = topTenReview;
+        this.otherReview = otherReview;
+        this.sales = sales;
+        this.views = views;
+        this.productYear = productYear;
+    }
+
     public Car() {}
 
     public String getId() { return id; }
