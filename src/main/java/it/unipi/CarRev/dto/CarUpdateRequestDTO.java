@@ -1,7 +1,10 @@
 package it.unipi.CarRev.dto;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter@Setter
 public class CarUpdateRequestDTO {
     @NotNull(message="this field cannot be null")
     private String id;
