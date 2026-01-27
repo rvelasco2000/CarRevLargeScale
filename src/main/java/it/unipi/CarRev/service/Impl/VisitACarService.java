@@ -31,6 +31,15 @@ public class VisitACarService {
     public FullCarInfoDTO getCarById(String id){
         Car car=carDAO.findById(id).orElse(null);
         if(car==null){
+            //if the car is not found it is possible that the admin has deleted it but it has remained in
+            //the recent car list in redis. To avoid costly search into every list for each user
+            //we have decided to check this only if trying visit a car fails.
+            //In this case we can search in the user list and delete it from there.
+            Authentication notFoundAuth=SecurityContextHolder.getContext().getAuthentication();
+            if(notFoundAuth != null && notFoundAuth.isAuthenticated() && !(notFoundAuth instanceof AnonymousAuthenticationToken)){
+
+            }
+
             return null;
         }
         cachedViewsForCarService.updateCachedViewsForCar(id);
@@ -43,9 +52,21 @@ public class VisitACarService {
         return CarUtils.mapCarToDto(car);
     }
     @Async
+    protected void deleteRecent(String carId,String userId){
+        String key="User:"+userId+":recentCar";
+        try(Jedis jedis=RedisConfig.getJedis()){
+
+
+        }
+        catch(Exception e){
+            System.err.print("An error has occurred during the delete of a recently viewed car:"+e.getMessage());
+        }
+    }
+    @Async
     protected void saveRecentlyViewed(Car car,String userId){
         String key="User:"+userId+":recentCar";
         final int EXPIRE=86400;
+        final int MAXELEM=5;
         try(Jedis jedis=RedisConfig.getJedis()){
             FrontPageCarSummaryDTO summary=new FrontPageCarSummaryDTO(
                     car.getId(),
@@ -56,14 +77,26 @@ public class VisitACarService {
                     car.getBodyType()
             );
             String json=objectMapper.writeValueAsString(summary);
+
             //eliminate eventual duplicate in the list
             jedis.lrem(key,0,json);
             jedis.lpush(key,json);
             jedis.ltrim(key,0,4);
             jedis.expire(key,EXPIRE);
+            /*double score=System.currentTimeMillis();
+            jedis.zadd(key,score,json);
+
+            long currentCar=jedis.zcard(key);
+            if(currentCar>MAXELEM){
+                jedis.zremrangeByRank(key,0,(int) (currentCar-MAXELEM)-1);
+            }
+            jedis.expire(key,EXPIRE);
 
         }
+        catch (Exception e){
+            System.out.println("error during the memorization of recently viewed car:"+e.getMessage());
+        }
 
-
+        */
     }
 }
