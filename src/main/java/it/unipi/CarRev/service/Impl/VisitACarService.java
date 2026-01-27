@@ -91,12 +91,10 @@ public class VisitACarService {
                 jedis.zremrangeByRank(key,0,(int) (currentCar-MAXELEM)-1);
             }
             jedis.expire(key,EXPIRE);
-
+        */
         }
         catch (Exception e){
             System.out.println("error during the memorization of recently viewed car:"+e.getMessage());
         }
-
-        */
     }
 }
