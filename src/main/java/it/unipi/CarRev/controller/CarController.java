@@ -57,7 +57,7 @@ public class CarController {
     public ResponseEntity<FullCarInfoDTO> visitACar(@RequestParam(required = true) String id){
         FullCarInfoDTO fullCarInfoDTO=visitACarService.getCarById(id);
         if(fullCarInfoDTO==null){
-            ResponseEntity.notFound().build();
+           return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(fullCarInfoDTO);
     }

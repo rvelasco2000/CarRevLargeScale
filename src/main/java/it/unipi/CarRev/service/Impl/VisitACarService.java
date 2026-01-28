@@ -17,7 +17,9 @@ import redis.clients.jedis.Jedis;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class VisitACarService {
@@ -37,9 +39,8 @@ public class VisitACarService {
             //In this case we can search in the user list and delete it from there.
             Authentication notFoundAuth=SecurityContextHolder.getContext().getAuthentication();
             if(notFoundAuth != null && notFoundAuth.isAuthenticated() && !(notFoundAuth instanceof AnonymousAuthenticationToken)){
-
+                deleteRecent(id,notFoundAuth.getName());
             }
-
             return null;
         }
         cachedViewsForCarService.updateCachedViewsForCar(id);
@@ -54,8 +55,15 @@ public class VisitACarService {
     @Async
     protected void deleteRecent(String carId,String userId){
         String key="User:"+userId+":recentCar";
+        final String CARSEARCH="\"id\":\""+carId+"\"";
         try(Jedis jedis=RedisConfig.getJedis()){
 
+            List<String> currentList=jedis.zrange(key,0,-1);
+            for(String listElem: currentList){
+                if(listElem.contains(CARSEARCH)){
+                    jedis.zrem(key,listElem);
+                }
+            }
 
         }
         catch(Exception e){
@@ -67,7 +75,14 @@ public class VisitACarService {
         String key="User:"+userId+":recentCar";
         final int EXPIRE=86400;
         final int MAXELEM=5;
+        final String CARSEARCH="\"id\":\""+car.getId()+"\"";
         try(Jedis jedis=RedisConfig.getJedis()){
+            List<String> currentList=jedis.zrange(key,0,-1);
+            for(String listElem: currentList){
+                if(listElem.contains(CARSEARCH)){
+                    jedis.zrem(key,listElem);
+                }
+            }
             FrontPageCarSummaryDTO summary=new FrontPageCarSummaryDTO(
                     car.getId(),
                     car.getCarBrand(),
@@ -77,13 +92,14 @@ public class VisitACarService {
                     car.getBodyType()
             );
             String json=objectMapper.writeValueAsString(summary);
-
+            /*
             //eliminate eventual duplicate in the list
             jedis.lrem(key,0,json);
             jedis.lpush(key,json);
             jedis.ltrim(key,0,4);
             jedis.expire(key,EXPIRE);
-            /*double score=System.currentTimeMillis();
+             */
+            double score=System.currentTimeMillis();
             jedis.zadd(key,score,json);
 
             long currentCar=jedis.zcard(key);
@@ -91,7 +107,7 @@ public class VisitACarService {
                 jedis.zremrangeByRank(key,0,(int) (currentCar-MAXELEM)-1);
             }
             jedis.expire(key,EXPIRE);
-        */
+
         }
         catch (Exception e){
             System.out.println("error during the memorization of recently viewed car:"+e.getMessage());
