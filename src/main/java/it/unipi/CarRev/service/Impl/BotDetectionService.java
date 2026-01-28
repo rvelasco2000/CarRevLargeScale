@@ -59,7 +59,11 @@ public class BotDetectionService {
         String newStatusKey="TrafficLog:"+username+":status";
         String newNOfVisitedPagesKey="TrafficLog:"+username+":numberOfVisitedPages";
         String nOfUnregisteredVisitorKey="TrafficLog:"+UtilsForDate.getDate()+":numberOfUnregisteredUsers";
+        String nOfLegitimateUserskey="TrafficLog:"+ UtilsForDate.getDate()+":legitimate";
         try(Jedis jedis=RedisConfig.getJedis()){
+            if(jedis.exists(newStatusKey)){
+                jedis.decr(nOfLegitimateUserskey);
+            }
             if(jedis.exists(oldStatusKey)){
                 jedis.rename(oldStatusKey,newStatusKey);
             }

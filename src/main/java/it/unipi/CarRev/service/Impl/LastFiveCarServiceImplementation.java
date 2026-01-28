@@ -39,7 +39,7 @@ public class LastFiveCarServiceImplementation {
         String key="User:"+username+":recentCar";
         List<FrontPageCarSummaryDTO> lastCars=new ArrayList<>();
         try(Jedis jedis= RedisConfig.getJedis()){
-            List<String> jsonList=jedis.lrange(key,0,4);
+            List<String> jsonList=jedis.zrevrange(key,0,4);
             if(jsonList!=null){
                 for(String jsonElem:jsonList){
                     try{
