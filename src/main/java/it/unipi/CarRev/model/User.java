@@ -22,6 +22,8 @@ public class User {
     @Indexed(unique = true)
     private String email;
 
+    private List<Document> reviews;
+
     private String passwordHash;
     private boolean isAdmin;
     private Instant createdAt = Instant.now();
