@@ -38,6 +38,9 @@ public class SecurityConfig {
                                 "/error",
                                 "/swagger-auth.js"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/test/neo4j/ping").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/test/neo4j/car").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/test/neo4j/recommend").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/auth/register",
                                 "/api/auth/login",

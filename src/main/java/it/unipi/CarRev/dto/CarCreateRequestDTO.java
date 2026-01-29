@@ -17,7 +17,7 @@ public class CarCreateRequestDTO {
     @NotNull(message="this field cannot be null")
     private String driveWheels;
     @NotNull(message="this field cannot be null")
-    private Integer engineDisplacement;
+    private Double engineDisplacement;
     @NotNull(message="this field cannot be null")
     private Integer numberOfCylinders;
     @NotNull(message="this field cannot be null")
@@ -30,4 +30,7 @@ public class CarCreateRequestDTO {
     private Integer seatCapacity;
     @NotNull(message="this field cannot be null")
     private Double priceNew;
+    @NotNull(message="this field cannot be null")
+    private Integer ProductionYear;
+
 }
