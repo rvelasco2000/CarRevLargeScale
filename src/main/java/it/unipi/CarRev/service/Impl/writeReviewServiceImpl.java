@@ -7,25 +7,24 @@ import it.unipi.CarRev.dao.mongo.projection.CarName;
 import it.unipi.CarRev.dto.InsertReviewRequestDTO;
 import it.unipi.CarRev.mapper.ReviewMapper;
 import it.unipi.CarRev.model.Review;
-import it.unipi.CarRev.model.User;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.Array;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 
 @Service
@@ -34,26 +33,33 @@ public class writeReviewServiceImpl {
     private final CarDAO carDAO;
     private final MongoTemplate mongoTemplate;
     private final ReviewDAO reviewDAO;
-    public writeReviewServiceImpl(UserDAO userDAO,CarDAO carDAO,MongoTemplate mongoTemplate,ReviewDAO reviewDAO){
+    private final ReviewMapper reviewMapper;
+    public writeReviewServiceImpl(UserDAO userDAO,CarDAO carDAO,MongoTemplate mongoTemplate,ReviewDAO reviewDAO,ReviewMapper reviewMapper){
         this.userDAO=userDAO;
         this.carDAO=carDAO;
         this.mongoTemplate=mongoTemplate;
         this.reviewDAO=reviewDAO;
+        this.reviewMapper=reviewMapper;
     }
 
-    public boolean writeReview(InsertReviewRequestDTO insertReviewRequestDTO){
-        Authentication auth= SecurityContextHolder.getContext().getAuthentication();
+
+
+    //@Transactional
+    @Async("taskExecutor")
+    public CompletableFuture<Boolean> writeReview(InsertReviewRequestDTO insertReviewRequestDTO,String newusername){
+       Authentication auth= SecurityContextHolder.getContext().getAuthentication();
         String username=null;
         //this check should be handled by the security config but for good measure i will keep it
         if(auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
             username = auth.getName();
+            System.out.println("username="+username);
         }
         else{
-            return false;
+            return CompletableFuture.completedFuture(false);
         }
         CarName carName=carDAO.findCarById(insertReviewRequestDTO.getCarId());
         if(carName==null){
-            return false;
+            return CompletableFuture.completedFuture(false);
         }
         Document newReview=new Document()
                 .append("_id",new ObjectId())
@@ -63,15 +69,13 @@ public class writeReviewServiceImpl {
                 .append("Timestamp", LocalDateTime.now())
                 .append("Likes",0)
                 .append("Report",0);
-        ReviewMapper reviewMapper;
-        //Review insertReview=reviewMapper.mapReviewFromDto(newReview,);
-        //reviewDAO.save();
         if(insertReviewRequestDTO.getYear()!=null){
             newReview.append("Year",insertReviewRequestDTO.getYear());
         }
         if(insertReviewRequestDTO.getMileage()!=null){
             newReview.append("Mileage",insertReviewRequestDTO.getMileage());
         }
+        Review review=reviewMapper.mapDocumentToReview(newReview);
         Query query=new Query(Criteria.where("username").is(username));
         List<Document> pipeline=Arrays.asList(
                 new Document("$set",new Document("reviews",
@@ -99,8 +103,9 @@ public class writeReviewServiceImpl {
                 query.getQueryObject(),
                 pipeline
         );
-
-
-        return true;
+        System.out.println("the review has been correctly saved in user collection");
+        reviewDAO.save(review);
+        System.out.println("the review has been correctly saved in reviews collection");
+        return CompletableFuture.completedFuture(true);
     }
 }

@@ -1,10 +1,12 @@
 package it.unipi.CarRev.config;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -38,6 +40,9 @@ public class SecurityConfig {
                                 "/error",
                                 "/swagger-auth.js"
                         ).permitAll()
+                        /*
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/cars/logged/review").authenticated()*/
                         .requestMatchers(HttpMethod.POST,
                                 "/api/auth/register",
                                 "/api/auth/login",
@@ -47,8 +52,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/api/cars",
                                 "/api/cars/visitCar").permitAll()
-                        .requestMatchers("/api/cars/logged/lastFive").authenticated()
-
+                        .requestMatchers(
+                                "/api/cars/logged/lastFive"
+                        ).authenticated()
                         .anyRequest().authenticated()
                 )
                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -22,5 +22,4 @@ public class Review {
     private Integer report;
     private Integer year;
     private Integer mileage;
-
 }
