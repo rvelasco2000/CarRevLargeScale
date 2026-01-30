@@ -31,6 +31,6 @@ public class CarCreateRequestDTO {
     @NotNull(message="this field cannot be null")
     private Double priceNew;
     @NotNull(message="this field cannot be null")
-    private Integer ProductionYear;
+    private Integer productionYear;
 
 }

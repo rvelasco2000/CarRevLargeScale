@@ -51,15 +51,15 @@ public class CarSearchServiceImpl implements CarSearchService {
         List<Criteria> criteriaList = new ArrayList<>();
 
         if (carName != null && !carName.isBlank()) {
-            criteriaList.add(Criteria.where("carName")
+            criteriaList.add(Criteria.where("car_name")
                     .regex(Pattern.compile(Pattern.quote(carName), Pattern.CASE_INSENSITIVE)));
         }
         if (carBrand != null && !carBrand.isBlank()) {
-            criteriaList.add(Criteria.where("carBrand")
+            criteriaList.add(Criteria.where("car_brand")
                     .regex(Pattern.compile(Pattern.quote(carBrand), Pattern.CASE_INSENSITIVE)));
         }
         if (carModel != null && !carModel.isBlank()) {
-            criteriaList.add(Criteria.where("carModel")
+            criteriaList.add(Criteria.where("car_model")
                     .regex(Pattern.compile(Pattern.quote(carModel), Pattern.CASE_INSENSITIVE)));
         }
         if (bodyType != null && !bodyType.isBlank()) {

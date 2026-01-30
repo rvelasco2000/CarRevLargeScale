@@ -12,7 +12,7 @@ public class Car {
 
     @Id
     private String id;
-    @Field("car_name")
+   @Field("car_name")
     private String carName;
     @Field("car_brand")
     private String carBrand;

@@ -29,7 +29,6 @@ public class InsertNewCarServiceImpl{
                 car.getHorsePower(),
                 car.getFuelType(),
                 car.getSeatCapacity(),
-
                 car.getPriceNew(),
                 0.0,
                 new ArrayList<String>(),

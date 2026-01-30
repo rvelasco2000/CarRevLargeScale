@@ -34,6 +34,8 @@ public class DeleteACarServiceImpl {
                 System.out.println("neo4j mismatch on delete: deleted=" + deleted);
                 return -2; //
             }
+
+
             carDAO.deleteById(id);
             int result=deleteInRedis(id);
             return result;
