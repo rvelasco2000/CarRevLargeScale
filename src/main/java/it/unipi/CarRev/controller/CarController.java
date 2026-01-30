@@ -1,20 +1,17 @@
 package it.unipi.CarRev.controller;
 
-import it.unipi.CarRev.dto.CarSearchResponse;
-import it.unipi.CarRev.dto.CarSummaryDTO;
-import it.unipi.CarRev.dto.FrontPageCarSummaryDTO;
-import it.unipi.CarRev.dto.FullCarInfoDTO;
+import it.unipi.CarRev.dto.*;
 import it.unipi.CarRev.service.CarSearchService;
 import it.unipi.CarRev.service.Impl.LastFiveCarServiceImplementation;
 import it.unipi.CarRev.service.Impl.VisitACarService;
+import it.unipi.CarRev.service.Impl.writeReviewServiceImpl;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 import tools.jackson.core.util.RecyclerPool;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/cars")
@@ -23,11 +20,13 @@ public class CarController {
     private final CarSearchService carSearchService;
     private final VisitACarService visitACarService;
     private final LastFiveCarServiceImplementation lastFiveCarServiceImplementation;
+    private final writeReviewServiceImpl writeReviewServiceImpl;
 
-    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation) {
+    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation, writeReviewServiceImpl writeReviewServiceImpl) {
         this.carSearchService = carSearchService;
         this.visitACarService = visitACarService;
         this.lastFiveCarServiceImplementation=lastFiveCarServiceImplementation;
+        this.writeReviewServiceImpl = writeReviewServiceImpl;
     }
 
     @GetMapping
@@ -67,5 +66,14 @@ public class CarController {
         List<FrontPageCarSummaryDTO> lastCars=lastFiveCarServiceImplementation.getLastFiveCar();
         return ResponseEntity.ok(lastCars);
 
+    }
+    @PostMapping("/logged/review")
+    public CompletableFuture<ResponseEntity<String>> reviewCar(@RequestBody(required = true)InsertReviewRequestDTO request, Authentication auth){
+        return writeReviewServiceImpl.writeReview(request,auth.getName()).thenApply(result->{
+            if(result){
+                return ResponseEntity.ok("review inserted correctly");
+            }
+            return ResponseEntity.notFound().build();
+        });
     }
 }

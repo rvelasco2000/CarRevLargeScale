@@ -1,6 +1,5 @@
 package it.unipi.CarRev.dto;
 
-import com.mongodb.annotations.Sealed;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,7 +12,7 @@ public class FullCarInfoDTO {
     private String carModel;
     private String bodyType;
     private String driveWheels;
-    private Integer engineDisplacement;
+    private Double engineDisplacement;
     private Integer numberOfCylinders;
     private String transmissionType;
     private Integer horsePower;
@@ -30,7 +29,7 @@ public class FullCarInfoDTO {
     public FullCarInfoDTO() {
     }
 
-    public FullCarInfoDTO(String id, String carName, String carBrand, String carModel, String bodyType, String driveWheels, Integer engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<String> topTenReview, List<String> otherReview, List<String> sales, Long views, List<?> productYear) {
+    public FullCarInfoDTO(String id, String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<String> topTenReview, List<String> otherReview, List<String> sales, Long views, List<?> productYear) {
         this.id = id;
         this.carName = carName;
         this.carBrand = carBrand;
