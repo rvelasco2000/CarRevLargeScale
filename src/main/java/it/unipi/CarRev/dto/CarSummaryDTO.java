@@ -7,14 +7,14 @@ public class CarSummaryDTO {
     private String carBrand;
     private String carModel;
     private String bodyType;
-    private Integer engineDisplacement;
+    private Double engineDisplacement;
     private Integer numberOfCylinders;
     private Long views;
 
     public CarSummaryDTO() {}
 
     public CarSummaryDTO(String id, String carName, String carBrand, String carModel,
-                         String bodyType, Integer engineDisplacement,
+                         String bodyType, Double engineDisplacement,
                          Integer numberOfCylinders, Long views) {
         this.id = id;
         this.carName = carName;
@@ -31,7 +31,7 @@ public class CarSummaryDTO {
     public String getCarBrand() { return carBrand; }
     public String getCarModel() { return carModel; }
     public String getBodyType() { return bodyType; }
-    public Integer getEngineDisplacement() { return engineDisplacement; }
+    public Double getEngineDisplacement() { return engineDisplacement; }
     public Integer getNumberOfCylinders() { return numberOfCylinders; }
     public Long getViews() { return views; }
 
@@ -40,7 +40,7 @@ public class CarSummaryDTO {
     public void setCarBrand(String carBrand) { this.carBrand = carBrand; }
     public void setCarModel(String carModel) { this.carModel = carModel; }
     public void setBodyType(String bodyType) { this.bodyType = bodyType; }
-    public void setEngineDisplacement(Integer engineDisplacement) { this.engineDisplacement = engineDisplacement; }
+    public void setEngineDisplacement(Double engineDisplacement) { this.engineDisplacement = engineDisplacement; }
     public void setNumberOfCylinders(Integer numberOfCylinders) { this.numberOfCylinders = numberOfCylinders; }
     public void setViews(Long views) { this.views = views; }
 }

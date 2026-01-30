@@ -29,13 +29,15 @@ public class InsertNewCarServiceImpl{
                 car.getHorsePower(),
                 car.getFuelType(),
                 car.getSeatCapacity(),
+
                 car.getPriceNew(),
                 0.0,
                 new ArrayList<String>(),
                 new ArrayList<String>(),
                 new ArrayList<String>(),
                 0L,
-                new ArrayList<>()
+                new ArrayList<>(),
+                car.getProductionYear()
 
         );
         try{
