@@ -41,12 +41,8 @@ public class writeReviewServiceImpl {
         this.reviewDAO=reviewDAO;
         this.reviewMapper=reviewMapper;
     }
-
-
-
-    //@Transactional
-    @Async("taskExecutor")
-    public CompletableFuture<Boolean> writeReview(InsertReviewRequestDTO insertReviewRequestDTO,String newusername){
+    @Transactional("mongoTransactionManager")
+    public Boolean writeReview(InsertReviewRequestDTO insertReviewRequestDTO){
        Authentication auth= SecurityContextHolder.getContext().getAuthentication();
         String username=null;
         //this check should be handled by the security config but for good measure i will keep it
@@ -55,11 +51,11 @@ public class writeReviewServiceImpl {
             System.out.println("username="+username);
         }
         else{
-            return CompletableFuture.completedFuture(false);
+            return false;
         }
         CarName carName=carDAO.findCarById(insertReviewRequestDTO.getCarId());
         if(carName==null){
-            return CompletableFuture.completedFuture(false);
+            return false;
         }
         Document newReview=new Document()
                 .append("_id",new ObjectId())
@@ -106,6 +102,6 @@ public class writeReviewServiceImpl {
         System.out.println("the review has been correctly saved in user collection");
         reviewDAO.save(review);
         System.out.println("the review has been correctly saved in reviews collection");
-        return CompletableFuture.completedFuture(true);
+        return true;
     }
 }

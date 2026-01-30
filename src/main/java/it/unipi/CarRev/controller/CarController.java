@@ -68,12 +68,11 @@ public class CarController {
 
     }
     @PostMapping("/logged/review")
-    public CompletableFuture<ResponseEntity<String>> reviewCar(@RequestBody(required = true)InsertReviewRequestDTO request, Authentication auth){
-        return writeReviewServiceImpl.writeReview(request,auth.getName()).thenApply(result->{
-            if(result){
-                return ResponseEntity.ok("review inserted correctly");
-            }
-            return ResponseEntity.notFound().build();
-        });
+    public ResponseEntity<String>reviewCar(@RequestBody(required = true)InsertReviewRequestDTO request){
+        Boolean results=writeReviewServiceImpl.writeReview(request);
+        if(results){
+            return ResponseEntity.ok("Review correctly inserted");
+        }
+        return ResponseEntity.notFound().build();
     }
 }
