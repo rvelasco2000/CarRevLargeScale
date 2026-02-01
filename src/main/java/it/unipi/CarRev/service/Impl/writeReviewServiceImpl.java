@@ -44,7 +44,7 @@ public class writeReviewServiceImpl {
     @Transactional("mongoTransactionManager")
     public Boolean writeReview(InsertReviewRequestDTO insertReviewRequestDTO){
         System.out.println("Is transaction active? " + org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
-       Authentication auth= SecurityContextHolder.getContext().getAuthentication();
+        Authentication auth= SecurityContextHolder.getContext().getAuthentication();
         String username=null;
         //this check should be handled by the security config but for good measure i will keep it
         if(auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
@@ -58,6 +58,14 @@ public class writeReviewServiceImpl {
         if(carName==null){
             return false;
         }
+        Document newReview=returnDocumentFromDTO(insertReviewRequestDTO,carName);
+        Review review=reviewMapper.mapDocumentToReview(newReview);
+        insertIntoUserCollection(newReview,username);
+        reviewDAO.save(review);
+        System.out.println("the review has been correctly saved in reviews collection");
+        return true;
+    }
+    private Document returnDocumentFromDTO(InsertReviewRequestDTO insertReviewRequestDTO,CarName carName){
         Document newReview=new Document()
                 .append("_id",new ObjectId())
                 .append("Car_name",carName.getcarName())
@@ -72,7 +80,9 @@ public class writeReviewServiceImpl {
         if(insertReviewRequestDTO.getMileage()!=null){
             newReview.append("Mileage",insertReviewRequestDTO.getMileage());
         }
-        Review review=reviewMapper.mapDocumentToReview(newReview);
+        return newReview;
+    }
+    private void insertIntoUserCollection(Document newReview,String username){
         Query query=new Query(Criteria.where("username").is(username));
         List<Document> pipeline=Arrays.asList(
                 new Document("$set",new Document("reviews",
@@ -85,13 +95,13 @@ public class writeReviewServiceImpl {
                 new Document("$set",new Document("otherReviews",
                         new Document("$concatArrays",Arrays.asList(
                                 new Document("$ifNull",Arrays.asList("$otherReviews",Arrays.asList())),
-                        new Document("$cond",Arrays.asList(
-                                new Document("$gt",Arrays.asList(new Document("$size","$reviews"),10)),
-                                Arrays.asList(new Document("$arrayElemAt",Arrays.asList("$reviews._id",10))),
-                                Arrays.asList()
-                        ))
+                                new Document("$cond",Arrays.asList(
+                                        new Document("$gt",Arrays.asList(new Document("$size","$reviews"),10)),
+                                        Arrays.asList(new Document("$arrayElemAt",Arrays.asList("$reviews._id",10))),
+                                        Arrays.asList()
+                                ))
 
-                )))),
+                        )))),
                 new Document("$set",new Document("reviews",
                         new Document("$slice",Arrays.asList("$reviews",10))))
         );
@@ -101,8 +111,5 @@ public class writeReviewServiceImpl {
                 pipeline
         );
         System.out.println("the review has been correctly saved in user collection");
-        reviewDAO.save(review);
-        System.out.println("the review has been correctly saved in reviews collection");
-        return true;
     }
 }
