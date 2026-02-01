@@ -2,6 +2,8 @@ package it.unipi.CarRev.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import java.util.List;
 @Getter @Setter
@@ -20,7 +22,7 @@ public class FullCarInfoDTO {
     private Integer seatCapacity;
     private Double priceNew;
     private Double generalRating;
-    private List<String> topTenReview;
+    private List<Document> topTenReview;
     private List<String> otherReview;
     private List<String> sales;
     private Long views;
@@ -29,7 +31,7 @@ public class FullCarInfoDTO {
     public FullCarInfoDTO() {
     }
 
-    public FullCarInfoDTO(String id, String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<String> topTenReview, List<String> otherReview, List<String> sales, Long views, List<?> productYear) {
+    public FullCarInfoDTO(String id, String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<Document> topTenReview, List<String> otherReview, List<String> sales, Long views, List<?> productYear) {
         this.id = id;
         this.carName = carName;
         this.carBrand = carBrand;

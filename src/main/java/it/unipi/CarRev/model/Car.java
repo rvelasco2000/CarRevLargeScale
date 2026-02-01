@@ -1,5 +1,6 @@
 package it.unipi.CarRev.model;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -50,10 +51,10 @@ public class Car {
     private Double generalRating;
 
     @Field("Top_Ten_Review")
-    private List<String> topTenReview;
+    private List<org.bson.Document> topTenReview;
 
     @Field("Other_review")
-    private List<String> otherReview;
+    private List<ObjectId> otherReview;
 
     private List<String> sales;
 
@@ -66,7 +67,7 @@ public class Car {
     private Integer production_year;
 
 
-    public Car(String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<String> topTenReview, List<String> otherReview, List<String> sales, Long views, List<?> productYear, Integer production_year) {
+    public Car(String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<org.bson.Document> topTenReview, List<ObjectId> otherReview, List<String> sales, Long views, List<?> productYear, Integer production_year) {
         this.carName = carName;
         this.carBrand = carBrand;
         this.carModel = carModel;
@@ -104,8 +105,8 @@ public class Car {
     public Integer getSeatCapacity() { return seatCapacity; }
     public Double getPriceNew() { return priceNew; }
     public Double getGeneralRating() { return generalRating; }
-    public List<String> getTopTenReview() { return topTenReview; }
-    public List<String> getOtherReview() { return otherReview; }
+    public List<org.bson.Document> getTopTenReview() { return topTenReview; }
+    public List<ObjectId> getOtherReview() { return otherReview; }
     public List<String> getSales() { return sales; }
     public Long getViews() { return views; }
     public List<?> getProductYear() { return productYear; }
@@ -126,8 +127,8 @@ public class Car {
     public void setSeatCapacity(Integer seatCapacity) { this.seatCapacity = seatCapacity; }
     public void setPriceNew(Double priceNew) { this.priceNew = priceNew; }
     public void setGeneralRating(Double generalRating) { this.generalRating = generalRating; }
-    public void setTopTenReview(List<String> topTenReview) { this.topTenReview = topTenReview; }
-    public void setOtherReview(List<String> otherReview) { this.otherReview = otherReview; }
+    public void setTopTenReview(List<org.bson.Document> topTenReview) { this.topTenReview = topTenReview; }
+    public void setOtherReview(List<ObjectId> otherReview) { this.otherReview = otherReview; }
     public void setSales(List<String> sales) { this.sales = sales; }
     public void setViews(Long views) { this.views = views; }
     public void setProduction_year(Integer production_year) { this.production_year = production_year; }

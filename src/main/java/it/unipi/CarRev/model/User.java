@@ -23,7 +23,7 @@ public class User {
     @Indexed(unique = true)
     private String email;
 
-    private List<Document> reviews;
+    private List<org.bson.Document> reviews;
     private List<ObjectId>otherReviews;
 
     private String passwordHash;

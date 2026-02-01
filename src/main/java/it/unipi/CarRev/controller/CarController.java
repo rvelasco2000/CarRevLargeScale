@@ -4,14 +4,14 @@ import it.unipi.CarRev.dto.*;
 import it.unipi.CarRev.service.CarSearchService;
 import it.unipi.CarRev.service.Impl.LastFiveCarServiceImplementation;
 import it.unipi.CarRev.service.Impl.VisitACarService;
-import it.unipi.CarRev.service.Impl.writeReviewServiceImpl;
+import it.unipi.CarRev.service.Impl.WriteReviewServiceImpl;
+import it.unipi.CarRev.service.exception.ResourceNotFoundException;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import tools.jackson.core.util.RecyclerPool;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/cars")
@@ -20,9 +20,9 @@ public class CarController {
     private final CarSearchService carSearchService;
     private final VisitACarService visitACarService;
     private final LastFiveCarServiceImplementation lastFiveCarServiceImplementation;
-    private final writeReviewServiceImpl writeReviewServiceImpl;
+    private final WriteReviewServiceImpl writeReviewServiceImpl;
 
-    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation, writeReviewServiceImpl writeReviewServiceImpl) {
+    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation, WriteReviewServiceImpl writeReviewServiceImpl) {
         this.carSearchService = carSearchService;
         this.visitACarService = visitACarService;
         this.lastFiveCarServiceImplementation=lastFiveCarServiceImplementation;
@@ -68,11 +68,19 @@ public class CarController {
 
     }
     @PostMapping("/logged/review")
-    public ResponseEntity<String>reviewCar(@RequestBody(required = true)InsertReviewRequestDTO request){
-        Boolean results=writeReviewServiceImpl.writeReview(request);
-        if(results){
+    public ResponseEntity<String>reviewCar(@Valid @RequestBody(required = true)InsertReviewRequestDTO request){
+        try{
+            Boolean results=writeReviewServiceImpl.writeReview(request);
+            return ResponseEntity.ok("Review correctly inserted");
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch (Exception e){
+            return ResponseEntity.internalServerError().build();
+        }
+        /*if(results){
             return ResponseEntity.ok("Review correctly inserted");
         }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.notFound().build();*/
     }
 }
