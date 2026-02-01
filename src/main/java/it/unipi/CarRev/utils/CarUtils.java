@@ -2,7 +2,10 @@ package it.unipi.CarRev.utils;
 
 import it.unipi.CarRev.dto.FullCarInfoDTO;
 import it.unipi.CarRev.model.Car;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
+import java.util.List;
 import java.util.Optional;
 
 public class CarUtils {
@@ -23,8 +26,22 @@ public class CarUtils {
         dto.setSeatCapacity(car.getSeatCapacity());
         dto.setPriceNew(car.getPriceNew());
         dto.setGeneralRating(car.getGeneralRating());
-        dto.setTopTenReview(car.getTopTenReview());
-        dto.setOtherReview(car.getOtherReview());
+        //dto.setTopTenReview(car.getTopTenReview());
+        if(car.getTopTenReview()!=null){
+            List<Document> readableReviews=car.getTopTenReview().stream()
+                    .map(doc->{
+                        Document newDoc=new Document(doc);
+                        if(newDoc.get("_id") instanceof ObjectId oid){
+                            newDoc.put("_id",oid.toHexString());
+                        }
+                        return newDoc;
+                    }).toList();
+            dto.setTopTenReview(readableReviews);
+        }
+        if(car.getOtherReview()!=null){
+            dto.setOtherReview(car.getOtherReview().stream().map(oid->oid.toHexString()).toList());
+        }
+        //dto.setOtherReview(car.getOtherReview());
         dto.setSales(car.getSales());
         dto.setViews(car.getViews());
         dto.setProductYear(car.getProductYear());

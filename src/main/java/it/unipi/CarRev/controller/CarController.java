@@ -5,7 +5,9 @@ import it.unipi.CarRev.service.CarSearchService;
 import it.unipi.CarRev.service.Impl.LastFiveCarServiceImplementation;
 import it.unipi.CarRev.service.Impl.VisitACarService;
 import it.unipi.CarRev.service.Impl.WriteReviewServiceImpl;
+import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -67,10 +69,18 @@ public class CarController {
     }
     @PostMapping("/logged/review")
     public ResponseEntity<String>reviewCar(@Valid @RequestBody(required = true)InsertReviewRequestDTO request){
-        Boolean results=writeReviewServiceImpl.writeReview(request);
-        if(results){
+        try{
+            Boolean results=writeReviewServiceImpl.writeReview(request);
+            return ResponseEntity.ok("Review correctly inserted");
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch (Exception e){
+            return ResponseEntity.internalServerError().build();
+        }
+        /*if(results){
             return ResponseEntity.ok("Review correctly inserted");
         }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.notFound().build();*/
     }
 }

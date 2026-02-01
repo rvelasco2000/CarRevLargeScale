@@ -1,5 +1,6 @@
 package it.unipi.CarRev.service.Impl;
 
+import com.mongodb.client.result.UpdateResult;
 import it.unipi.CarRev.dao.mongo.CarDAO;
 import it.unipi.CarRev.dao.mongo.ReviewDAO;
 import it.unipi.CarRev.dao.mongo.UserDAO;
@@ -7,6 +8,7 @@ import it.unipi.CarRev.dao.mongo.projection.CarName;
 import it.unipi.CarRev.dto.InsertReviewRequestDTO;
 import it.unipi.CarRev.mapper.ReviewMapper;
 import it.unipi.CarRev.model.Review;
+import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -17,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -53,7 +56,7 @@ public class WriteReviewServiceImpl {
         }
         CarName carName=carDAO.findCarById(insertReviewRequestDTO.getCarId());
         if(carName==null){
-            return false;
+            throw new ResourceNotFoundException("cannot find car with this id");
         }
         Document newReview=returnDocumentFromDTO(insertReviewRequestDTO,carName);
         Review review=reviewMapper.mapDocumentToReview(newReview,username);
@@ -105,10 +108,13 @@ public class WriteReviewServiceImpl {
                         new Document("$slice",Arrays.asList("$reviews",10))))
         );
 
-        mongoTemplate.getCollection("users").updateOne(
+       UpdateResult result=mongoTemplate.getCollection("users").updateOne(
                 query.getQueryObject(),
                 pipeline
         );
+       if(result.getMatchedCount()==0){
+           throw new ResourceNotFoundException("user not found");
+       }
         System.out.println("the review has been correctly saved in user collection");
     }
     private void insertIntoCarCollection(Document newReview,String carId,String username){
@@ -141,10 +147,13 @@ public class WriteReviewServiceImpl {
                         new Document("$slice",Arrays.asList("$Top_Ten_Review",10))))
         );
 
-        mongoTemplate.getCollection("cars").updateOne(
+       UpdateResult res=mongoTemplate.getCollection("cars").updateOne(
                 query.getQueryObject(),
                 pipeline
         );
+       if(res.getMatchedCount()==0){
+           throw new ResourceNotFoundException("car not found");
+       }
         System.out.println("the review has been correctly saved in car collection");
     }
 }
