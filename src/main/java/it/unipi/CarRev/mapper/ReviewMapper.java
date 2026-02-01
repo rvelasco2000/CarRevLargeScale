@@ -21,7 +21,7 @@ public class ReviewMapper {
         review.setLikes(docReview.getInteger("Likes",0));
         review.setReport(docReview.getInteger("Report",0));
         if(docReview.containsKey("Mileage")){
-            review.setMileage(docReview.getInteger("Mileage"));
+            review.setMileage(docReview.getDouble("Mileage"));
         }
         if(docReview.containsKey("Year")){
             review.setYear(docReview.getInteger("Year"));
