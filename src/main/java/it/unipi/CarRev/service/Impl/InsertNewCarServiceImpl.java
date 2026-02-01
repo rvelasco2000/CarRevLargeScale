@@ -4,6 +4,8 @@ package it.unipi.CarRev.service.Impl;
 import it.unipi.CarRev.dao.mongo.CarDAO;
 import it.unipi.CarRev.dto.CarCreateRequestDTO;
 import it.unipi.CarRev.model.Car;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
@@ -31,8 +33,8 @@ public class InsertNewCarServiceImpl{
                 car.getSeatCapacity(),
                 car.getPriceNew(),
                 0.0,
-                new ArrayList<String>(),
-                new ArrayList<String>(),
+                new ArrayList<Document>(),
+                new ArrayList<ObjectId>(),
                 new ArrayList<String>(),
                 0L,
                 new ArrayList<>(),

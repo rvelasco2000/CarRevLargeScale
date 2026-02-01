@@ -4,14 +4,12 @@ import it.unipi.CarRev.dto.*;
 import it.unipi.CarRev.service.CarSearchService;
 import it.unipi.CarRev.service.Impl.LastFiveCarServiceImplementation;
 import it.unipi.CarRev.service.Impl.VisitACarService;
-import it.unipi.CarRev.service.Impl.writeReviewServiceImpl;
+import it.unipi.CarRev.service.Impl.WriteReviewServiceImpl;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import tools.jackson.core.util.RecyclerPool;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/cars")
@@ -20,9 +18,9 @@ public class CarController {
     private final CarSearchService carSearchService;
     private final VisitACarService visitACarService;
     private final LastFiveCarServiceImplementation lastFiveCarServiceImplementation;
-    private final writeReviewServiceImpl writeReviewServiceImpl;
+    private final WriteReviewServiceImpl writeReviewServiceImpl;
 
-    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation, writeReviewServiceImpl writeReviewServiceImpl) {
+    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation, WriteReviewServiceImpl writeReviewServiceImpl) {
         this.carSearchService = carSearchService;
         this.visitACarService = visitACarService;
         this.lastFiveCarServiceImplementation=lastFiveCarServiceImplementation;
@@ -68,7 +66,7 @@ public class CarController {
 
     }
     @PostMapping("/logged/review")
-    public ResponseEntity<String>reviewCar(@RequestBody(required = true)InsertReviewRequestDTO request){
+    public ResponseEntity<String>reviewCar(@Valid @RequestBody(required = true)InsertReviewRequestDTO request){
         Boolean results=writeReviewServiceImpl.writeReview(request);
         if(results){
             return ResponseEntity.ok("Review correctly inserted");
