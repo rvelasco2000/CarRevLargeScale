@@ -43,6 +43,7 @@ public class writeReviewServiceImpl {
     }
     @Transactional("mongoTransactionManager")
     public Boolean writeReview(InsertReviewRequestDTO insertReviewRequestDTO){
+        System.out.println("Is transaction active? " + org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
        Authentication auth= SecurityContextHolder.getContext().getAuthentication();
         String username=null;
         //this check should be handled by the security config but for good measure i will keep it

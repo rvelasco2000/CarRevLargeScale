@@ -21,5 +21,5 @@ public class Review {
     private Integer likes;
     private Integer report;
     private Integer year;
-    private Integer mileage;
+    private Double mileage;
 }
