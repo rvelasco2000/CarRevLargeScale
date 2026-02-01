@@ -15,6 +15,7 @@ public class Review {
     private String id;
 
     private String carName;
+    private String username;
     private String text;
     private Double rating;
     private LocalDateTime timestamp;

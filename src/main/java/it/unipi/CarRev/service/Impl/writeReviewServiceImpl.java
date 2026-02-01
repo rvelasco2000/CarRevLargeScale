@@ -59,7 +59,7 @@ public class writeReviewServiceImpl {
             return false;
         }
         Document newReview=returnDocumentFromDTO(insertReviewRequestDTO,carName);
-        Review review=reviewMapper.mapDocumentToReview(newReview);
+        Review review=reviewMapper.mapDocumentToReview(newReview,username);
         insertIntoUserCollection(newReview,username);
         reviewDAO.save(review);
         System.out.println("the review has been correctly saved in reviews collection");
@@ -112,4 +112,5 @@ public class writeReviewServiceImpl {
         );
         System.out.println("the review has been correctly saved in user collection");
     }
+    //private void insertIntoCarCollection(Document newReview,String carId)
 }

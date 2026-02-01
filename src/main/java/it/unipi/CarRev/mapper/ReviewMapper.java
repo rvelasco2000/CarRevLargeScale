@@ -7,9 +7,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ReviewMapper {
-    public Review mapDocumentToReview(Document docReview){
+    public Review mapDocumentToReview(Document docReview,String username){
         Review review=new Review();
         review.setId(docReview.getObjectId("_id").toHexString());
+        review.setUsername(username);
         review.setCarName(docReview.getString("Car_Name"));
         review.setText("Text");
         review.setRating(docReview.getDouble("Rating"));
