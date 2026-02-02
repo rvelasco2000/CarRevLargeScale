@@ -61,6 +61,7 @@ public class WriteReviewServiceImpl {
         Document newReview=returnDocumentFromDTO(insertReviewRequestDTO,carName);
         Review review=reviewMapper.mapDocumentToReview(newReview,username);
         System.out.println(review.getText());
+        newReview.remove("report");
         insertIntoUserCollection(newReview,username);
         reviewDAO.save(review);
         System.out.println("the review has been correctly saved in reviews collection");
