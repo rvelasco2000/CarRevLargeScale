@@ -8,7 +8,7 @@ import redis.clients.jedis.Jedis;
 public class CachedReportAReviewServiceImplementation {
 
     public void reportAReview(String reviewId){
-        final String REVIEWKEY="Reviews:"+reviewId+":nReport";
+        final String REVIEWKEY="Reviews:"+reviewId+":numReports";
         try(Jedis jedis=RedisConfig.getJedis()){
             jedis.incr(REVIEWKEY);
         }
