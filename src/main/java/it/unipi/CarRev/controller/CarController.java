@@ -2,10 +2,7 @@ package it.unipi.CarRev.controller;
 
 import it.unipi.CarRev.dto.*;
 import it.unipi.CarRev.service.CarSearchService;
-import it.unipi.CarRev.service.Impl.CachedReportAReviewServiceImplementation;
-import it.unipi.CarRev.service.Impl.LastFiveCarServiceImplementation;
-import it.unipi.CarRev.service.Impl.VisitACarService;
-import it.unipi.CarRev.service.Impl.WriteReviewServiceImpl;
+import it.unipi.CarRev.service.Impl.*;
 import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -24,13 +21,15 @@ public class CarController {
     private final LastFiveCarServiceImplementation lastFiveCarServiceImplementation;
     private final WriteReviewServiceImpl writeReviewServiceImpl;
     private final CachedReportAReviewServiceImplementation cachedReportAReviewServiceImplementation;
+    private final CachedLikeAReviewServiceImplementation cachedLikeAReviewServiceImplementation;
 
-    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation, WriteReviewServiceImpl writeReviewServiceImpl, CachedReportAReviewServiceImplementation cachedReportAReviewServiceImplementation) {
+    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation, WriteReviewServiceImpl writeReviewServiceImpl, CachedReportAReviewServiceImplementation cachedReportAReviewServiceImplementation,CachedLikeAReviewServiceImplementation cachedLikeAReviewServiceImplementation) {
         this.carSearchService = carSearchService;
         this.visitACarService = visitACarService;
         this.lastFiveCarServiceImplementation=lastFiveCarServiceImplementation;
         this.writeReviewServiceImpl = writeReviewServiceImpl;
         this.cachedReportAReviewServiceImplementation=cachedReportAReviewServiceImplementation;
+        this.cachedLikeAReviewServiceImplementation=cachedLikeAReviewServiceImplementation;
     }
 
     @GetMapping
@@ -91,5 +90,10 @@ public class CarController {
     public ResponseEntity<String>reportAReview(@NotNull @RequestParam String reviewId){
         cachedReportAReviewServiceImplementation.reportAReview(reviewId);
         return ResponseEntity.ok("review correctly reported");
+    }
+    @GetMapping("/logged/likeAReview")
+    public ResponseEntity<String> likeAReview(@NotNull @RequestParam String reviewId){
+        cachedLikeAReviewServiceImplementation.likeAReview(reviewId);
+        return ResponseEntity.ok("review correctly liked");
     }
 }
