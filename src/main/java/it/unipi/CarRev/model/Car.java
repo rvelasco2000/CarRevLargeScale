@@ -2,6 +2,7 @@ package it.unipi.CarRev.model;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -9,6 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import java.util.List;
 
 @Document(collection = "cars")
+@CompoundIndex(def="{'Top_Ten_Review._id':1}",name="index_for_embedded_reviews_in_car")
 public class Car {
 
     @Id
@@ -19,7 +21,6 @@ public class Car {
     private String carBrand;
     @Field("car_model")
     private String carModel;
-
     @Field("body_type")
     private String bodyType;
 

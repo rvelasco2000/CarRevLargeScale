@@ -2,6 +2,7 @@ package it.unipi.CarRev.model;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
@@ -12,6 +13,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Document(collection = "users")
+@CompoundIndex(def="{'reviews._id':1}",name="index_for_embedded_reviews_in_users")
 public class User {
 
     @Id
