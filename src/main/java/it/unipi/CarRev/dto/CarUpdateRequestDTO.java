@@ -14,7 +14,7 @@ public class CarUpdateRequestDTO {
     private String carModel;
     private String bodyType;
     private String driveWheels;
-    private Integer engineDisplacement;
+    private Double engineDisplacement;
     private Integer numberOfCylinders;
     private String transmissionType;
     private Integer horsePower;
