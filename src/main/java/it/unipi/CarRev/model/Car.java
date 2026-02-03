@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.List;
-
+//testing
 @Document(collection = "cars")
 @CompoundIndex(def="{'Top_Ten_Review._id':1}",name="index_for_embedded_reviews_in_car")
 public class Car {
@@ -67,8 +67,14 @@ public class Car {
     @Field("production_year")
     private Integer production_year;
 
+    @Field("total_review_score")
+    private Integer totalScore;
 
-    public Car(String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<org.bson.Document> topTenReview, List<ObjectId> otherReview, List<String> sales, Long views, List<?> productYear, Integer production_year) {
+    @Field("number_of_reviews")
+    private Integer numberOfReviews;
+
+
+    public Car(String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<org.bson.Document> topTenReview, List<ObjectId> otherReview, List<String> sales, Long views, List<?> productYear, Integer production_year,Integer totalScore,Integer numberOfReviews){
         this.carName = carName;
         this.carBrand = carBrand;
         this.carModel = carModel;
@@ -88,6 +94,8 @@ public class Car {
         this.views = views;
         this.productYear = productYear;
         this.production_year = production_year;
+        this.totalScore=totalScore;
+        this.numberOfReviews=numberOfReviews;
     }
 
     public Car() {}
@@ -112,6 +120,8 @@ public class Car {
     public Long getViews() { return views; }
     public List<?> getProductYear() { return productYear; }
     public Integer getProduction_year() { return production_year; }
+    public Integer getTotalScore(){return totalScore;}
+    public Integer getNumberOfReviews(){return numberOfReviews;}
 
 
     public void setId(String id) { this.id = id; }
@@ -134,4 +144,6 @@ public class Car {
     public void setViews(Long views) { this.views = views; }
     public void setProduction_year(Integer production_year) { this.production_year = production_year; }
     public void setProductYear(List<?> productYear) { this.productYear = productYear; }
+    public void setTotalScore(Integer totalScore){this.totalScore=totalScore;}
+    public void setNumberOfReviews(Integer numberOfReviews){this.numberOfReviews=numberOfReviews;}
 }
