@@ -44,7 +44,9 @@ public class InsertNewCarServiceImpl{
                 new ArrayList<String>(),
                 0L,
                 new ArrayList<>(),
-                car.getProductionYear()
+                car.getProductionYear(),
+                0,
+                0
 
         );
         try{

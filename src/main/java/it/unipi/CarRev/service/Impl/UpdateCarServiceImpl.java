@@ -53,7 +53,6 @@ public class UpdateCarServiceImpl {
             if (neo == Neo4jUpdateService.UpdateOutcome.ERROR) {
                 return -3;
             }
-
             carMapper.updateCarFromDto(dto, oldCar);
             carDAO.save(oldCar);
 

@@ -1,6 +1,7 @@
 package it.unipi.CarRev.service.Impl;
 
 import com.mongodb.client.result.UpdateResult;
+import it.unipi.CarRev.config.RedisConfig;
 import it.unipi.CarRev.dao.mongo.CarDAO;
 import it.unipi.CarRev.dao.mongo.ReviewDAO;
 import it.unipi.CarRev.dao.mongo.UserDAO;
@@ -19,7 +20,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.server.ResponseStatusException;
+import redis.clients.jedis.Jedis;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -66,7 +70,27 @@ public class WriteReviewServiceImpl {
         reviewDAO.save(review);
         System.out.println("the review has been correctly saved in reviews collection");
         insertIntoCarCollection(newReview,insertReviewRequestDTO.getCarId(),username);
+        insertScoreInformationInRedisAfterCommit(insertReviewRequestDTO.getRating(), insertReviewRequestDTO.getCarId());
         return true;
+    }
+    private void insertScoreInformationInRedisAfterCommit(Double score,String carId){
+        if(TransactionSynchronizationManager.isActualTransactionActive()){
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit(){
+                    final String SCOREKEY="Cars:"+carId+":totalRating";
+                    final String NUMREVKEY="Cars:"+carId+":numberOfReviews";
+                    try(Jedis jedis=RedisConfig.getJedis()){
+                        jedis.incr(NUMREVKEY);
+                        jedis.incrByFloat(SCOREKEY,score);
+                    }
+                    catch(Exception e){
+                        System.out.println("Error during redis memorization of review info:"+e.getMessage());
+                    }
+
+                }
+            });
+        }
     }
     private Document returnDocumentFromDTO(InsertReviewRequestDTO insertReviewRequestDTO,CarName carName){
         Document newReview=new Document()
