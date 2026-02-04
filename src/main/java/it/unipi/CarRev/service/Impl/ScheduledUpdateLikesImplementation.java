@@ -64,7 +64,7 @@ public class ScheduledUpdateLikesImplementation {
                 reviewOps.execute();
                 userOps.execute();
                 carOps.execute();
-                System.out.println("migration of likes from redis to mongoDB has been successfull");
+                System.out.println("migration of likes from redis to mongoDB has been successful");
             }
             for(String key: allKeys){
                 if("0".equals(jedis.get(key))){
