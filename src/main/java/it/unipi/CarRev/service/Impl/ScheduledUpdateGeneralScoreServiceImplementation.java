@@ -8,6 +8,7 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.AggregationUpdate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -43,6 +44,7 @@ public class ScheduledUpdateGeneralScoreServiceImplementation {
                 if(nOfReviews==0){
                     continue;
                 }
+                /*
                 List<Document> pipeline= Arrays.asList(
                         new Document("$set",new Document()
                                 .append("total_review_score",new Document("$add",Arrays.asList("$total_review_score",totalScore)))
@@ -51,9 +53,15 @@ public class ScheduledUpdateGeneralScoreServiceImplementation {
                         new Document("$set",new Document("general_rating",
                                 new Document("$divide",Arrays.asList("$total_review_score","$number_of_reviews"))))
                 );
+                 */
                 Query query=new Query(Criteria.where("_id").is(new ObjectId(carId)));
-                Update update=Update.fromDocument(new Document("$set",pipeline));
+                //Update update=Update.fromDocument(new Document("$set",pipeline));
+                AggregationUpdate update=AggregationUpdate.update()
+                                .set("total_review_score").toValue(new Document("$add",Arrays.asList("$total_review_score",totalScore)))
+                                .set("number_of_reviews").toValue(new Document("$add",Arrays.asList("$number_of_reviews",nOfReviews)))
+                                .set("general_rating").toValue(new Document("$divide",Arrays.asList("$total_review_score","$number_of_reviews")));
                 carBulk.updateOne(query,update);
+                System.out.println("running");
                 hasOp=true;
             }
             if(hasOp){
