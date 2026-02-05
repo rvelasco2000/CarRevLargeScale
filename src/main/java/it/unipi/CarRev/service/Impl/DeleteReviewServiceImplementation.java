@@ -5,6 +5,7 @@ import it.unipi.CarRev.dao.mongo.ReviewDAO;
 import it.unipi.CarRev.dao.mongo.UserDAO;
 import it.unipi.CarRev.model.Car;
 import it.unipi.CarRev.model.User;
+import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -26,7 +27,7 @@ public class DeleteReviewServiceImplementation{
         this.mongoTemplate=mongoTemplate;
     }
     @Transactional("mongoTransactionManager")
-    public boolean deleteAReview(String reviewId){
+    public void deleteAReview(String reviewId){
         Authentication auth= SecurityContextHolder.getContext().getAuthentication();
         String username=null;
         if(auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
@@ -34,20 +35,18 @@ public class DeleteReviewServiceImplementation{
             System.out.println("username="+username);
         }
         else{
-            return false;
+            throw new RuntimeException("User must be authenticated");
         }
         Boolean result=deleteInUser(reviewId,username);
         if(!result){
             System.out.println("user:"+username+" does not own the review");
-            return false;
+            throw new ResourceNotFoundException("the user does not own this review");
         }
         System.out.println("review correctly removed from users collection");
         deleteInCar(reviewId);
         System.out.println("review correctly removed from car collection");
         reviewDAO.deleteById(reviewId);
         System.out.println("review correctly removed from reviews collection");
-
-        return true;
     }
     private void deleteInCar(String reviewId){
         ObjectId objReviewId=new ObjectId(reviewId);

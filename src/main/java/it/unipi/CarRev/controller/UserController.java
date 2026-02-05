@@ -1,7 +1,10 @@
 package it.unipi.CarRev.controller;
 
 import it.unipi.CarRev.service.Impl.DeleteReviewServiceImplementation;
+import it.unipi.CarRev.service.exception.ResourceNotFoundException;
+import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,9 +21,15 @@ public class UserController {
 
     @GetMapping("/deleteReview")
     public ResponseEntity<String> deleteReview(@NotNull @RequestParam String reviewId){
-        deleteReviewServiceImplementation.deleteAReview(reviewId);
-        return ResponseEntity.ok("reviews correctly deleted");
-
-
+        try {
+            deleteReviewServiceImplementation.deleteAReview(reviewId);
+            return ResponseEntity.ok("reviews correctly deleted");
+        }
+        catch(ResourceNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch (Exception e){
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
 }
