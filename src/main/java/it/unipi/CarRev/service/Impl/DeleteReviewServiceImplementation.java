@@ -37,16 +37,22 @@ public class DeleteReviewServiceImplementation{
         }
         reviewDAO.deleteById(reviewId);
         System.out.println("review correctly removed from Review collection");
+        deleteInUser(reviewId);
+        System.out.println("review correctly removed from User Collection");
+
         return true;
     }
     private void deleteInUser(String reviewId){
         ObjectId objReviewId=new ObjectId(reviewId);
-        Query query=new Query(Criteria.where("reviews._id").is(objReviewId));
-        org.springframework.data.mongodb.core.query.Update update =new Update().pull("reviews",new Document("_id",objReviewId));
-        UpdateResult result=mongoTemplate.updateFirst(query,update, User.class);
-        if(result.getMatchedCount()==0){
-            //insert here otherReviews delete
-        }
+        Query query=new Query(new Criteria().orOperator(
+                Criteria.where("reviews._id").is(objReviewId),
+                Criteria.where("otherReviews").is(objReviewId))
+        );
+        Update update=new Update()
+                .pull("reviews",new Document("_id",objReviewId))
+                .pull("otherReviews",objReviewId);
+        mongoTemplate.updateFirst(query,update,User.class);
+
 
     }
 }
