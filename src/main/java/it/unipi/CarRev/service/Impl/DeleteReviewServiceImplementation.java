@@ -36,12 +36,16 @@ public class DeleteReviewServiceImplementation{
         else{
             return false;
         }
-        reviewDAO.deleteById(reviewId);
-        System.out.println("review correctly removed from reviews collection");
-        deleteInUser(reviewId);
+        Boolean result=deleteInUser(reviewId,username);
+        if(!result){
+            System.out.println("user:"+username+" does not own the review");
+            return false;
+        }
         System.out.println("review correctly removed from users collection");
         deleteInCar(reviewId);
         System.out.println("review correctly removed from car collection");
+        reviewDAO.deleteById(reviewId);
+        System.out.println("review correctly removed from reviews collection");
 
         return true;
     }
@@ -56,16 +60,20 @@ public class DeleteReviewServiceImplementation{
                 .pull("Other_review",objReviewId);
         mongoTemplate.updateFirst(query,update, Car.class);
     }
-    private void deleteInUser(String reviewId){
+    private Boolean deleteInUser(String reviewId,String username){
         ObjectId objReviewId=new ObjectId(reviewId);
-        Query query=new Query(new Criteria().orOperator(
+        Query query=new Query(Criteria.where("username").is(username).orOperator(
                 Criteria.where("reviews._id").is(objReviewId),
                 Criteria.where("otherReviews").is(objReviewId))
         );
         Update update=new Update()
                 .pull("reviews",new Document("_id",objReviewId))
                 .pull("otherReviews",objReviewId);
-        mongoTemplate.updateFirst(query,update,User.class);
+        UpdateResult updateResult=mongoTemplate.updateFirst(query,update,User.class);
+        if(updateResult.getMatchedCount()==0){
+            return false;
+        }
+       return true;
 
 
     }

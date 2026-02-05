@@ -16,7 +16,7 @@ public class UserController {
         this.deleteReviewServiceImplementation=deleteReviewServiceImplementation;
     }
 
-    @GetMapping("/delReview")
+    @GetMapping("/deleteReview")
     public ResponseEntity<String> deleteReview(@NotNull @RequestParam String reviewId){
         deleteReviewServiceImplementation.deleteAReview(reviewId);
         return ResponseEntity.ok("reviews correctly deleted");
