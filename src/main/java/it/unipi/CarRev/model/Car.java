@@ -15,11 +15,11 @@ public class Car {
 
     @Id
     private String id;
-   @Field("car_name")
+   @Field("carName")
     private String carName;
-    @Field("car_brand")
+    @Field("carBrand")
     private String carBrand;
-    @Field("car_model")
+    @Field("carModel")
     private String carModel;
     @Field("body_type")
     private String bodyType;
