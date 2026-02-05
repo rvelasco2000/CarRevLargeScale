@@ -51,7 +51,7 @@ public class InsertNewCarServiceImpl{
         );
         try{
             carDAO.save(newCar);
-            neo4jService.insertCar(car); // Neo4j
+           neo4jService.insertCar(car); // Neo4j
             return true;
         }
         catch(Exception e){
