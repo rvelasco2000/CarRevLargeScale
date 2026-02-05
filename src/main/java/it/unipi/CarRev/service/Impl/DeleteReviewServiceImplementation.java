@@ -3,6 +3,7 @@ package it.unipi.CarRev.service.Impl;
 import com.mongodb.client.result.UpdateResult;
 import it.unipi.CarRev.dao.mongo.ReviewDAO;
 import it.unipi.CarRev.dao.mongo.UserDAO;
+import it.unipi.CarRev.model.Car;
 import it.unipi.CarRev.model.User;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -36,11 +37,24 @@ public class DeleteReviewServiceImplementation{
             return false;
         }
         reviewDAO.deleteById(reviewId);
-        System.out.println("review correctly removed from Review collection");
+        System.out.println("review correctly removed from reviews collection");
         deleteInUser(reviewId);
-        System.out.println("review correctly removed from User Collection");
+        System.out.println("review correctly removed from users collection");
+        deleteInCar(reviewId);
+        System.out.println("review correctly removed from car collection");
 
         return true;
+    }
+    private void deleteInCar(String reviewId){
+        ObjectId objReviewId=new ObjectId(reviewId);
+        Query query=new Query(new Criteria().orOperator(
+                Criteria.where("Top_Ten_Review._id").is(objReviewId),
+                Criteria.where("Other_review").is(objReviewId)
+        ));
+        Update update=new Update()
+                .pull("Top_Ten_Review",new Document("_id",objReviewId))
+                .pull("Other_review",objReviewId);
+        mongoTemplate.updateFirst(query,update, Car.class);
     }
     private void deleteInUser(String reviewId){
         ObjectId objReviewId=new ObjectId(reviewId);
