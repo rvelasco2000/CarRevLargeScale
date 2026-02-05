@@ -10,6 +10,7 @@ import it.unipi.CarRev.model.User;
 import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -24,6 +25,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import redis.clients.jedis.Jedis;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -97,9 +99,12 @@ public class DeleteReviewServiceImplementation{
         Update update=new Update()
                 .pull("Top_Ten_Review",new Document("_id",objReviewId))
                 .pull("Other_review",objReviewId);
-        Car car=mongoTemplate.findAndModify(query,update, Car.class);
+        Car car=mongoTemplate.findAndModify(query,update,FindAndModifyOptions.options().returnNew(true),Car.class);
         if(car==null){
             throw new ResourceNotFoundException("car not found");
+        }
+        if(car.getTopTenReview().size()<10 && !car.getOtherReview().isEmpty()){
+            promoteAReview(car.getId(),car.getOtherReview().getLast());
         }
         return car.getId();
     }
@@ -117,7 +122,31 @@ public class DeleteReviewServiceImplementation{
             return false;
         }
        return true;
-
-
+    }
+    private void promoteAReview(String carId,ObjectId nextReviewId){
+        Optional<Review> optReview=reviewDAO.findById(String.valueOf(nextReviewId));
+        if(optReview.isEmpty()){
+            throw new ResourceNotFoundException("review to promote not found");
+        }
+        Review review=optReview.get();
+        Document toInputReview=new Document()
+                .append("_id",nextReviewId)
+                .append("car_name",review.getCarName())
+                .append("text",review.getText())
+                .append("rating",review.getRating())
+                .append("timestamp",review.getTimestamp())
+                .append("likes",review.getLikes())
+                .append("report",review.getReport());
+        if(review.getYear()!=null){
+            toInputReview.append("year",review.getYear());
+        }
+        if(review.getMileage()!=null){
+            toInputReview.append("mileage",review.getMileage());
+        }
+        Query query=new Query(Criteria.where("_id").is(carId));
+        Update update = new Update()
+                .push("Top_Ten_Review",toInputReview)
+                .pull("Other_review",nextReviewId);
+        mongoTemplate.updateFirst(query, update, Car.class);
     }
 }
