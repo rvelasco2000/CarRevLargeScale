@@ -1,7 +1,7 @@
 package it.unipi.CarRev.service.Impl;
 
 import it.unipi.CarRev.dto.CarSearchResponse;
-import it.unipi.CarRev.dto.CarSummaryDTO;
+import it.unipi.CarRev.dto.FrontPageCarSummaryDTO;
 import it.unipi.CarRev.model.Car;
 import it.unipi.CarRev.service.CarSearchService;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -92,17 +92,15 @@ public class CarSearchServiceImpl implements CarSearchService {
         query.skip(skip).limit(safeSize);
 
         List<Car> cars = mongoTemplate.find(query, Car.class);
-        List<CarSummaryDTO> items = new ArrayList<>(cars.size());
+        List<FrontPageCarSummaryDTO> items = new ArrayList<>(cars.size());
         for (Car car : cars) {
-            items.add(new CarSummaryDTO(
+            items.add(new FrontPageCarSummaryDTO(
                     car.getId(),
-                    car.getCarName(),
                     car.getCarBrand(),
                     car.getCarModel(),
-                    car.getBodyType(),
-                    car.getEngineDisplacement(),
-                    car.getNumberOfCylinders(),
-                    car.getViews()
+                    car.getGeneralRating(),
+                    car.getFuelType(),
+                    car.getBodyType()
             ));
         }
 
