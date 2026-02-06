@@ -63,7 +63,6 @@ public class DeleteReviewServiceImplementation{
     }
     private Double fetchScore(String reviewId){
         Optional<Review> review=reviewDAO.findById(reviewId);
-
         if(review.isPresent()){
            Review actualReview=review.get();
            return actualReview.getRating();
