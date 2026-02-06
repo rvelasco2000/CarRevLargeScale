@@ -12,6 +12,9 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.AggregationUpdate;
+import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators;
+import org.springframework.data.mongodb.core.aggregation.ConditionalOperators;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -47,7 +50,7 @@ public class DeleteReviewServiceImplementation{
         else{
             throw new RuntimeException("User must be authenticated");
         }
-        Double rating=fetchScore(reviewId);
+       // Double rating=fetchScore(reviewId);
         Boolean result=deleteInUser(reviewId,username);
         if(!result){
             System.out.println("user:"+username+" does not own the review");
@@ -58,7 +61,7 @@ public class DeleteReviewServiceImplementation{
         System.out.println("review correctly removed from car collection");
         reviewDAO.deleteById(reviewId);
         System.out.println("review correctly removed from reviews collection");
-        deleteScoreReviewAfterCommit(carId,rating);
+        //deleteScoreReviewAfterCommit(carId,rating);
         System.out.println("correctly migrated deleted review info form mongoDB to redis");
     }
     private Double fetchScore(String reviewId){
@@ -71,6 +74,7 @@ public class DeleteReviewServiceImplementation{
             throw new ResourceNotFoundException("the review does not exists");
         }
     }
+    /*
     private void deleteScoreReviewAfterCommit(String carId,Double score){
         if(TransactionSynchronizationManager.isActualTransactionActive()){
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -88,16 +92,28 @@ public class DeleteReviewServiceImplementation{
                 }
             });
         }
-    }
+    }*/
     private String deleteInCar(String reviewId){
         ObjectId objReviewId=new ObjectId(reviewId);
+
         Query query=new Query(new Criteria().orOperator(
                 Criteria.where("Top_Ten_Review._id").is(objReviewId),
                 Criteria.where("Other_review").is(objReviewId)
         ));
+        Car oldCar=mongoTemplate.findOne(query,Car.class);
+        Double score=oldCar.getTopTenReview().stream()
+                .filter(embReview->embReview.get("_id").equals(objReviewId))
+                .findFirst()
+                .map(rev->rev.getDouble("rating")).orElse(null);
+        if(score==null){
+            score=fetchScore(reviewId);
+        }
+        System.out.println("score of the eliminated review:"+score);
         Update update=new Update()
                 .pull("Top_Ten_Review",new Document("_id",objReviewId))
-                .pull("Other_review",objReviewId);
+                .pull("Other_review",objReviewId)
+                .inc("total_review_score",-score)
+                .inc("number_of_reivews",-1);
         Car car=mongoTemplate.findAndModify(query,update,FindAndModifyOptions.options().returnNew(true),Car.class);
         if(car==null){
             throw new ResourceNotFoundException("car not found");
@@ -105,7 +121,22 @@ public class DeleteReviewServiceImplementation{
         if(car.getTopTenReview().size()<10 && !car.getOtherReview().isEmpty()){
             promoteAReview(car.getId(),car.getOtherReview().getLast());
         }
+        updateReview(car.getId());
         return car.getId();
+    }
+    private void updateReview(String carId){
+        Query query=new Query(Criteria.where("_id").is(carId));
+        AggregationUpdate update=AggregationUpdate.update()
+                .set("general_rating").toValue(
+                        ConditionalOperators.when(Criteria.where("number_of_reviews").gt(0))
+                                .then(ArithmeticOperators.Divide.valueOf("total_review_score").divideBy("number_of_reviews"))
+                                .otherwise(0)
+                );
+        mongoTemplate.updateFirst(
+                query,
+                update,
+                Car.class
+        );
     }
     private Boolean deleteInUser(String reviewId,String username){
         ObjectId objReviewId=new ObjectId(reviewId);
