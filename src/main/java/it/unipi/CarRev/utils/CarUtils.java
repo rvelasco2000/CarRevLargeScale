@@ -44,7 +44,15 @@ public class CarUtils {
         //dto.setOtherReview(car.getOtherReview());
         dto.setSales(car.getSales());
         dto.setViews(car.getViews());
-        dto.setProductYear(car.getProductYear());
+        //dto.setProductYear(car.getProductYear());
+        if(car.getProductYear()!=null){
+            List<Document> readableYear=car.getProductYear().stream()
+                    .map(doc->new Document()
+                            .append("Year",doc.get("Year"))
+                            .append("Average_Mileage",doc.get("Average_Mileage")))
+                    .toList();
+            dto.setProductYear(readableYear);
+        }
         return dto;
     }
 }

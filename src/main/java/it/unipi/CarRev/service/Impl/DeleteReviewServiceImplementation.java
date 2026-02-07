@@ -27,6 +27,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import redis.clients.jedis.Jedis;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Optional;
 
 /***
@@ -64,7 +65,7 @@ public class DeleteReviewServiceImplementation{
         reviewDAO.deleteById(reviewId);
         System.out.println("review correctly removed from reviews collection");
         //deleteScoreReviewAfterCommit(carId,rating);
-        System.out.println("correctly migrated deleted review info form mongoDB to redis");
+        //System.out.println("correctly migrated deleted review info form mongoDB to redis");
     }
     private Double fetchScore(String reviewId){
         Optional<Review> review=reviewDAO.findById(reviewId);
@@ -125,7 +126,7 @@ public class DeleteReviewServiceImplementation{
                                 .then(ArithmeticOperators.Divide.valueOf("total_review_score").divideBy("number_of_reviews"))
                                 .otherwise(0)
                 );
-        /*
+                /*
         Car oldCar=mongoTemplate.findOne(query,Car.class);
         Double score=oldCar.getTopTenReview().stream()
                 .filter(embReview->embReview.get("_id").equals(objReviewId))
@@ -177,11 +178,43 @@ public class DeleteReviewServiceImplementation{
         Update update=new Update()
                 .pull("reviews",new Document("_id",objReviewId))
                 .pull("otherReviews",objReviewId);
-        UpdateResult updateResult=mongoTemplate.updateFirst(query,update,User.class);
-        if(updateResult.getMatchedCount()==0){
+       // UpdateResult updateResult=mongoTemplate.updateFirst(query,update,User.class);
+        User user=mongoTemplate.findAndModify(query,update,FindAndModifyOptions.options().returnNew(true),User.class);
+
+        if(user==null){
             return false;
         }
+        if(user.getReviews().size()<10 && !user.getOtherReviews().isEmpty()){
+            promoteReviewInUser(username,user.getOtherReviews().getLast());
+        }
        return true;
+    }
+    //very unlikely that a user will have more than 10 reviews
+    private void promoteReviewInUser(String username,ObjectId promotedReviewId){
+        Optional<Review> optReview=reviewDAO.findById(String.valueOf(promotedReviewId));
+        if(optReview.isEmpty()){
+            throw new ResourceNotFoundException("review to promote not found");
+        }
+        Review review=optReview.get();
+        Document newReview=new Document()
+                .append("_id",promotedReviewId)
+                .append("car_name",review.getCarName())
+                .append("text",review.getText())
+                .append("rating",review.getRating())
+                .append("timestamp",review.getTimestamp())
+                .append("likes",review.getLikes())
+                .append("report",review.getReport());
+        if(review.getYear()!=null){
+            newReview.append("year",review.getYear());
+        }
+        if(review.getMileage()!=null){
+            newReview.append("mileage",review.getMileage());
+        }
+        Query query=new Query(Criteria.where("username").is(username));
+        Update update = new Update()
+                .push("reviews",newReview)
+                .pull("otherReviews",promotedReviewId);
+        mongoTemplate.updateFirst(query, update, User.class);
     }
     private void promoteAReview(String carId,ObjectId nextReviewId){
         Optional<Review> optReview=reviewDAO.findById(String.valueOf(nextReviewId));
@@ -191,7 +224,7 @@ public class DeleteReviewServiceImplementation{
         Review review=optReview.get();
         Document toInputReview=new Document()
                 .append("_id",nextReviewId)
-                .append("car_name",review.getCarName())
+                .append("username",review.getUsername())
                 .append("text",review.getText())
                 .append("rating",review.getRating())
                 .append("timestamp",review.getTimestamp())

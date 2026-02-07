@@ -43,7 +43,7 @@ public class InsertNewCarServiceImpl{
                 new ArrayList<ObjectId>(),
                 new ArrayList<String>(),
                 0L,
-                new ArrayList<>(),
+                new ArrayList<Document>(),
                 car.getProductionYear(),
                 0.0,
                 0
@@ -51,7 +51,7 @@ public class InsertNewCarServiceImpl{
         );
         try{
             carDAO.save(newCar);
-           //neo4jService.insertCar(car); // Neo4j
+            neo4jService.insertCar(car); // Neo4j
             return true;
         }
         catch(Exception e){
