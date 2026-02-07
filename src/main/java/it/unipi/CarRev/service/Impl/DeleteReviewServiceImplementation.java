@@ -12,9 +12,7 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.AggregationUpdate;
-import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators;
-import org.springframework.data.mongodb.core.aggregation.ConditionalOperators;
+import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -31,6 +29,10 @@ import redis.clients.jedis.Jedis;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+/***
+ * since the delete of a review is something that we do sporadically we have decided to create something more complex
+ * and decided to put the promotion of a review here
+ */
 @Service
 public class DeleteReviewServiceImplementation{
     private final ReviewDAO reviewDAO;
@@ -57,7 +59,7 @@ public class DeleteReviewServiceImplementation{
             throw new ResourceNotFoundException("the user does not own this review");
         }
         System.out.println("review correctly removed from users collection");
-        String carId=deleteInCar(reviewId);
+        deleteInCar(reviewId);
         System.out.println("review correctly removed from car collection");
         reviewDAO.deleteById(reviewId);
         System.out.println("review correctly removed from reviews collection");
@@ -93,7 +95,7 @@ public class DeleteReviewServiceImplementation{
             });
         }
     }*/
-    private String deleteInCar(String reviewId){
+    private void deleteInCar(String reviewId){
         ObjectId objReviewId=new ObjectId(reviewId);
 
         Query query=new Query(new Criteria().orOperator(
@@ -109,11 +111,37 @@ public class DeleteReviewServiceImplementation{
             score=fetchScore(reviewId);
         }
         System.out.println("score of the eliminated review:"+score);
+        AggregationUpdate update=AggregationUpdate.update()
+                .set("Top_Ten_Review").toValue(ArrayOperators.Filter.filter("Top_Ten_Review")
+                        .as("review")
+                        .by(ComparisonOperators.Ne.valueOf("review._id").notEqualToValue(objReviewId)))
+                .set("Other_review").toValue(ArrayOperators.Filter.filter("Other_review")
+                        .as("linkedRev")
+                        .by(ComparisonOperators.Ne.valueOf("linkedRev").notEqualToValue(objReviewId)))
+                .set("total_review_score").toValue(ArithmeticOperators.Subtract.valueOf("total_review_score").subtract(score))
+                .set("number_of_reviews").toValue(ArithmeticOperators.Subtract.valueOf("number_of_reviews").subtract(1))
+                .set("general_rating").toValue(
+                        ConditionalOperators.when(Criteria.where("number_of_reviews").gt(0))
+                                .then(ArithmeticOperators.Divide.valueOf("total_review_score").divideBy("number_of_reviews"))
+                                .otherwise(0)
+                );
+        /*
+        Car oldCar=mongoTemplate.findOne(query,Car.class);
+        Double score=oldCar.getTopTenReview().stream()
+                .filter(embReview->embReview.get("_id").equals(objReviewId))
+                .findFirst()
+                .map(rev->rev.getDouble("rating")).orElse(null);
+        if(score==null){
+            score=fetchScore(reviewId);
+        }
+        System.out.println("score of the eliminated review:"+score);
         Update update=new Update()
                 .pull("Top_Ten_Review",new Document("_id",objReviewId))
                 .pull("Other_review",objReviewId)
                 .inc("total_review_score",-score)
                 .inc("number_of_reivews",-1);
+
+         */
         Car car=mongoTemplate.findAndModify(query,update,FindAndModifyOptions.options().returnNew(true),Car.class);
         if(car==null){
             throw new ResourceNotFoundException("car not found");
@@ -121,9 +149,10 @@ public class DeleteReviewServiceImplementation{
         if(car.getTopTenReview().size()<10 && !car.getOtherReview().isEmpty()){
             promoteAReview(car.getId(),car.getOtherReview().getLast());
         }
-        updateReview(car.getId());
-        return car.getId();
+        //updateReview(car.getId());
+       // return car.getId();
     }
+    /*
     private void updateReview(String carId){
         Query query=new Query(Criteria.where("_id").is(carId));
         AggregationUpdate update=AggregationUpdate.update()
@@ -138,6 +167,7 @@ public class DeleteReviewServiceImplementation{
                 Car.class
         );
     }
+     */
     private Boolean deleteInUser(String reviewId,String username){
         ObjectId objReviewId=new ObjectId(reviewId);
         Query query=new Query(Criteria.where("username").is(username).orOperator(
