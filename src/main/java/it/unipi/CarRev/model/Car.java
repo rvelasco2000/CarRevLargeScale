@@ -68,13 +68,13 @@ public class Car {
     private Integer production_year;
 
     @Field("total_review_score")
-    private Integer totalScore;
+    private Double totalScore;
 
     @Field("number_of_reviews")
     private Integer numberOfReviews;
 
 
-    public Car(String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<org.bson.Document> topTenReview, List<ObjectId> otherReview, List<String> sales, Long views, List<?> productYear, Integer production_year,Integer totalScore,Integer numberOfReviews){
+    public Car(String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<org.bson.Document> topTenReview, List<ObjectId> otherReview, List<String> sales, Long views, List<?> productYear, Integer production_year,Double totalScore,Integer numberOfReviews){
         this.carName = carName;
         this.carBrand = carBrand;
         this.carModel = carModel;
@@ -120,7 +120,7 @@ public class Car {
     public Long getViews() { return views; }
     public List<?> getProductYear() { return productYear; }
     public Integer getProduction_year() { return production_year; }
-    public Integer getTotalScore(){return totalScore;}
+    public Double getTotalScore(){return totalScore;}
     public Integer getNumberOfReviews(){return numberOfReviews;}
 
 
@@ -144,6 +144,6 @@ public class Car {
     public void setViews(Long views) { this.views = views; }
     public void setProduction_year(Integer production_year) { this.production_year = production_year; }
     public void setProductYear(List<?> productYear) { this.productYear = productYear; }
-    public void setTotalScore(Integer totalScore){this.totalScore=totalScore;}
+    public void setTotalScore(Double totalScore){this.totalScore=totalScore;}
     public void setNumberOfReviews(Integer numberOfReviews){this.numberOfReviews=numberOfReviews;}
 }

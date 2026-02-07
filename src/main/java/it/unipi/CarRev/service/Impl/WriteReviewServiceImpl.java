@@ -70,9 +70,10 @@ public class WriteReviewServiceImpl {
         reviewDAO.save(review);
         System.out.println("the review has been correctly saved in reviews collection");
         insertIntoCarCollection(newReview,insertReviewRequestDTO.getCarId(),username);
-        insertScoreInformationInRedisAfterCommit(insertReviewRequestDTO.getRating(), insertReviewRequestDTO.getCarId());
+       // insertScoreInformationInRedisAfterCommit(insertReviewRequestDTO.getRating(), insertReviewRequestDTO.getCarId());
         return true;
     }
+    /*
     private void insertScoreInformationInRedisAfterCommit(Double score,String carId){
         if(TransactionSynchronizationManager.isActualTransactionActive()){
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -91,7 +92,7 @@ public class WriteReviewServiceImpl {
                 }
             });
         }
-    }
+    }*/
     private Document returnDocumentFromDTO(InsertReviewRequestDTO insertReviewRequestDTO,CarName carName){
         Document newReview=new Document()
                 .append("_id",new ObjectId())
@@ -169,7 +170,20 @@ public class WriteReviewServiceImpl {
 
                         )))),
                 new Document("$set",new Document("Top_Ten_Review",
-                        new Document("$slice",Arrays.asList("$Top_Ten_Review",10))))
+                        new Document("$slice",Arrays.asList("$Top_Ten_Review",10)))),
+                new Document("$set", new Document()
+                        .append("total_review_score", new Document("$add", Arrays.asList(
+                                new Document("$ifNull", Arrays.asList("$total_review_score", 0)), newReview.getDouble("rating"))))
+                        .append("number_of_reviews", new Document("$add", Arrays.asList(
+                                new Document("$ifNull", Arrays.asList("$number_of_reviews", 0)), 1)))
+                ),
+                new Document("$set", new Document("general_rating",
+                        new Document("$cond", Arrays.asList(
+                                new Document("$gt", Arrays.asList("$number_of_reviews", 0)),
+                                new Document("$divide", Arrays.asList("$total_review_score", "$number_of_reviews")),
+                                0.0
+                        ))
+                ))
         );
 
        UpdateResult res=mongoTemplate.getCollection("cars").updateOne(

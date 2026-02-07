@@ -19,14 +19,14 @@ import redis.clients.jedis.Jedis;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-
+//todo delete this class
 @Service
 public class ScheduledUpdateGeneralScoreServiceImplementation {
     private final MongoTemplate mongoTemplate;
     public ScheduledUpdateGeneralScoreServiceImplementation(MongoTemplate mongoTemplate){
         this.mongoTemplate=mongoTemplate;
     }
-    @Scheduled(cron="0 */10 * * * *")
+    //@Scheduled(cron="0 */10 * * * *")
     public void scheduledScoreUpdate(){
         Set<String> allKeys=RedisUtils.getSring("Cars:*:numberOfReviews");
         if(allKeys.isEmpty()){
