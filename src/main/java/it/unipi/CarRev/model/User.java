@@ -47,6 +47,12 @@ public class User {
     public String getPasswordHash() { return passwordHash; }
     public boolean isAdmin() { return isAdmin; }
     public Instant getCreatedAt() { return createdAt; }
+    public List<org.bson.Document> getReviews() {
+        return reviews;
+    }
+    public List<ObjectId> getOtherReviews() {
+        return otherReviews;
+    }
 
     public void setId(String id) { this.id = id; }
     public void setUsername(String username) { this.username = username; }
@@ -54,4 +60,12 @@ public class User {
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public void setAdmin(boolean admin) { isAdmin = admin; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public void setReviews(List<org.bson.Document> reviews) {
+        this.reviews = reviews;
+    }
+
+    public void setOtherReviews(List<ObjectId> otherReviews) {
+        this.otherReviews = otherReviews;
+    }
 }
