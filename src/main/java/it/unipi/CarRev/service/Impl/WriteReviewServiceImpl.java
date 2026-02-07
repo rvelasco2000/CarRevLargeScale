@@ -151,6 +151,14 @@ public class WriteReviewServiceImpl {
         newReviewForCar.append("username",username);
         System.out.println("username:"+newReviewForCar.get("username"));
 
+        Integer reviewYear=newReviewForCar.getInteger("year");
+        Double reviewMileage=newReviewForCar.getDouble("mileage");
+        Integer increment=1;
+        if(reviewMileage==null || reviewMileage==0.0){
+            increment=0;
+        }
+
+
         List<Document> pipeline=Arrays.asList(
                 new Document("$set",new Document("Top_Ten_Review",
                         new Document("$concatArrays",Arrays.asList(
@@ -171,6 +179,37 @@ public class WriteReviewServiceImpl {
                         )))),
                 new Document("$set",new Document("Top_Ten_Review",
                         new Document("$slice",Arrays.asList("$Top_Ten_Review",10)))),
+                new Document("$set", new Document("Product_Year",reviewYear==null?"$Product_Year": new Document("$cond", Arrays.asList(
+                        new Document("$in", Arrays.asList(reviewYear, new Document("$ifNull", Arrays.asList("$Product_Year.Year", Arrays.asList())))),
+                        new Document("$map", new Document()
+                                .append("input", "$Product_Year")
+                                .append("as", "yearDocu")
+                                .append("in", new Document("$cond", Arrays.asList(
+                                        new Document("$eq", Arrays.asList("$$yearDocu.Year", reviewYear)),
+                                        new Document()
+                                                .append("Year", "$$yearDocu.Year")
+                                                .append("Total_Mileage", new Document("$add", Arrays.asList("$$yearDocu.Total_Mileage", reviewMileage)))
+                                                .append("Num_Review_Year", new Document("$add", Arrays.asList("$$yearDocu.Num_Review_Year",increment)))
+                                                .append("Average_Mileage", new Document("$cond", Arrays.asList(
+                                                        new Document("$gt", Arrays.asList(new Document("$add", Arrays.asList("$$yearDocu.Num_Review_Year", increment)), 0)),
+                                                        new Document("$divide", Arrays.asList(
+                                                                new Document("$add", Arrays.asList("$$yearDocu.Total_Mileage", reviewMileage)),
+                                                                new Document("$add", Arrays.asList("$$yearDocu.Num_Review_Year", increment))
+                                                        )),
+                                                        0.0
+                                                ))),
+                                        "$$yearDocu"
+                                )))
+                        ),
+                        new Document("$concatArrays", Arrays.asList(
+                                new Document("$ifNull", Arrays.asList("$Product_Year", Arrays.asList())),
+                                reviewYear != null ? Collections.singletonList(new Document()
+                                        .append("Year", reviewYear)
+                                        .append("Total_Mileage", reviewMileage)
+                                        .append("Num_Review_Year", increment)
+                                        .append("Average_Mileage", reviewMileage)) : Arrays.asList()
+                        ))
+                )))),
                 new Document("$set", new Document()
                         .append("total_review_score", new Document("$add", Arrays.asList(
                                 new Document("$ifNull", Arrays.asList("$total_review_score", 0)), newReview.getDouble("rating"))))
