@@ -3,6 +3,7 @@ package it.unipi.CarRev.service.Impl;
 
 import it.unipi.CarRev.config.RedisConfig;
 import it.unipi.CarRev.dao.mongo.CarDAO;
+import it.unipi.CarRev.dao.neo4j.VisitNeo4jDAO;
 import it.unipi.CarRev.dto.FrontPageCarSummaryDTO;
 import it.unipi.CarRev.dto.FullCarInfoDTO;
 import it.unipi.CarRev.model.Car;
@@ -29,6 +30,8 @@ public class VisitACarService {
     private CachedViewsForCarService cachedViewsForCarService;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private VisitNeo4jDAO visitNeo4jDAO;
 
     public FullCarInfoDTO getCarById(String id){
         Car car=carDAO.findById(id).orElse(null);
@@ -48,7 +51,9 @@ public class VisitACarService {
         Authentication auth= SecurityContextHolder.getContext().getAuthentication();
         if(auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)){
             String username=auth.getName();
+            long matched = visitNeo4jDAO.mergeVisited(username, car);
             saveRecentlyViewed(car,username);
+
         }
         return CarUtils.mapCarToDto(car);
     }
