@@ -1,6 +1,7 @@
 first of all you have to setup neo 4j 
 1.insert the file car_data_filtered.csv in the import folder
 insert this query:"//
+//
 MATCH (n) DETACH DELETE n;
 //
 // ---- Car indexes (help matching & guard-rails)
@@ -77,7 +78,112 @@ CALL {
 //
 MATCH (c:Car)
 CALL {
-  WITH c"
+  WITH c
+  WITH c,
+    toLower(trim(c.car_brand)) AS brand,
+    toLower(trim(c.car_model)) AS model,
+    toLower(trim(c.body_type)) AS body,
+    toLower(trim(c.drive_wheels)) AS drive,
+    toLower(trim(c.transmission_type)) AS trans,
+    toLower(trim(c.fuel_type)) AS fuel,
+    c.production_year AS year
+
+  // Brand
+  FOREACH (_ IN CASE WHEN brand IS NULL OR brand = "" THEN [] ELSE [1] END |
+    MERGE (b:Brand {name: brand})
+    MERGE (c)-[:OF_BRAND]->(b)
+  )
+
+  // Model
+  FOREACH (_ IN CASE WHEN model IS NULL OR model = "" OR brand IS NULL OR brand = "" THEN [] ELSE [1] END |
+    MERGE (m:Model {name: model, brand: brand})
+    MERGE (c)-[:OF_MODEL]->(m)
+  )
+
+  // Body
+  FOREACH (_ IN CASE WHEN body IS NULL OR body = "" THEN [] ELSE [1] END |
+    MERGE (bt:BodyType {name: body})
+    MERGE (c)-[:HAS_BODY_TYPE]->(bt)
+  )
+
+  // Drive
+  FOREACH (_ IN CASE WHEN drive IS NULL OR drive = "" THEN [] ELSE [1] END |
+    MERGE (dw:DriveWheels {name: drive})
+    MERGE (c)-[:HAS_DRIVE]->(dw)
+  )
+
+  // Transmission
+  FOREACH (_ IN CASE WHEN trans IS NULL OR trans = "" THEN [] ELSE [1] END |
+    MERGE (tr:Transmission {name: trans})
+    MERGE (c)-[:HAS_TRANSMISSION]->(tr)
+  )
+
+  // Fuel
+  FOREACH (_ IN CASE WHEN fuel IS NULL OR fuel = "" THEN [] ELSE [1] END |
+    MERGE (ft:FuelType {name: fuel})
+    MERGE (c)-[:USES_FUEL]->(ft)
+  )
+
+  // Year
+  FOREACH (_ IN CASE WHEN year IS NULL THEN [] ELSE [1] END |
+    MERGE (y:Year {value: year})
+    MERGE (c)-[:OF_YEAR]->(y)
+  )
+} IN TRANSACTIONS OF 2000 ROWS;
+//
+UNWIND [
+  {min: 0,      max: 10000,    name:"<10k"},
+  {min: 10000,  max: 20000,    name:"10–20k"},
+  {min: 20000,  max: 30000,    name:"20–30k"},
+  {min: 30000,  max: 45000,    name:"30–45k"},
+  {min: 45000,  max: 60000,    name:"45–60k"},
+  {min: 60000,  max: 80000,    name:"60–80k"},
+  {min: 80000,  max: 120000,   name:"80–120k"},
+  {min: 120000, max: 1e18,     name:">=120k"}
+] AS p
+MERGE (b:PriceBin {min: p.min, max: p.max})
+SET b.name = p.name;
+//
+WITH range(1, 12) AS i
+UNWIND i AS k
+WITH (k-1)*0.5 + 0.5 AS minL, k*0.5 + 0.5 AS maxL
+MERGE (b:DispBin {min: minL, max: maxL})
+SET b.name = toString(minL) + "–" + toString(maxL) + "L";
+//
+// delete old links in batch
+MATCH (c:Car)-[old:HAS_PRICE_BIN]->(:PriceBin)
+CALL {
+  WITH old
+  DELETE old
+} IN TRANSACTIONS OF 5000 ROWS;
+
+// rebuild links in batch
+MATCH (c:Car)
+WHERE c.price_new IS NOT NULL
+CALL {
+  WITH c
+  MATCH (b:PriceBin)
+  WHERE c.price_new >= b.min AND c.price_new < b.max
+  MERGE (c)-[:HAS_PRICE_BIN]->(b)
+} IN TRANSACTIONS OF 2000 ROWS;
+//
+// delete old links in batch
+MATCH (c:Car)-[old:HAS_DISPLACEMENT_BIN]->(:DispBin)
+CALL {
+  WITH old
+  DELETE old
+} IN TRANSACTIONS OF 5000 ROWS;
+
+// rebuild links in batch
+MATCH (c:Car)
+WHERE c.engine_displacement IS NOT NULL
+CALL {
+  WITH c
+  MATCH (b:DispBin)
+  WHERE c.engine_displacement >= b.min AND c.engine_displacement < b.max
+  MERGE (c)-[:HAS_DISPLACEMENT_BIN]->(b)
+} IN TRANSACTIONS OF 2000 ROWS;
+//"
 
 
 
@@ -182,4 +288,5 @@ UNWIND $clicks AS click
         ORDER BY shared_features DESC, avg_price_diff ASC, avg_disp_diff ASC
         LIMIT 5
 //
+
 "
