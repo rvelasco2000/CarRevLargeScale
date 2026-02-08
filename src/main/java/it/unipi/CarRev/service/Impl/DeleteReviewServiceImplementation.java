@@ -37,11 +37,18 @@ import java.util.Optional;
 @Service
 public class DeleteReviewServiceImplementation{
     private final ReviewDAO reviewDAO;
+    private record ReviewInfo(Double score,Integer year,Double mileage){}
     private final MongoTemplate mongoTemplate;
     public DeleteReviewServiceImplementation(ReviewDAO reviewDAO,MongoTemplate mongoTemplate){
         this.reviewDAO=reviewDAO;
         this.mongoTemplate=mongoTemplate;
     }
+
+    /***
+     * this method allow us to delete a review without breaking the integrity between the reviews,users,cars collection
+     * it also correctly update the average score of a car and the average mileage for each year
+     * @param reviewId: the Id of the review i want to delete
+     */
     @Transactional("mongoTransactionManager")
     public void deleteAReview(String reviewId){
         Authentication auth= SecurityContextHolder.getContext().getAuthentication();
@@ -67,11 +74,15 @@ public class DeleteReviewServiceImplementation{
         //deleteScoreReviewAfterCommit(carId,rating);
         //System.out.println("correctly migrated deleted review info form mongoDB to redis");
     }
-    private Double fetchScore(String reviewId){
+    private ReviewInfo fetchInfo(String reviewId){
         Optional<Review> review=reviewDAO.findById(reviewId);
         if(review.isPresent()){
            Review actualReview=review.get();
-           return actualReview.getRating();
+           return new ReviewInfo(
+                   actualReview.getRating(),
+                   actualReview.getYear(),
+                   actualReview.getMileage()
+           );
         }
         else{
             throw new ResourceNotFoundException("the review does not exists");
@@ -98,19 +109,40 @@ public class DeleteReviewServiceImplementation{
     }*/
     private void deleteInCar(String reviewId){
         ObjectId objReviewId=new ObjectId(reviewId);
+        Double score=null;
+        Integer year=null;
+        Double mileage=null;
 
         Query query=new Query(new Criteria().orOperator(
                 Criteria.where("Top_Ten_Review._id").is(objReviewId),
                 Criteria.where("Other_review").is(objReviewId)
         ));
         Car oldCar=mongoTemplate.findOne(query,Car.class);
+        /*
         Double score=oldCar.getTopTenReview().stream()
                 .filter(embReview->embReview.get("_id").equals(objReviewId))
                 .findFirst()
                 .map(rev->rev.getDouble("rating")).orElse(null);
-        if(score==null){
-            score=fetchScore(reviewId);
+
+         */
+        //here i check if the car is present in the latest_review to avoid lookin int reviews collection
+        Document review=oldCar.getTopTenReview().stream()
+                .filter(embReview->embReview.get("_id").equals(objReviewId))
+                .findFirst().orElse(null);
+        if(review==null){
+            ReviewInfo reviewInfo=fetchInfo(reviewId);
+            score=reviewInfo.score;
+            year=reviewInfo.year;
+            mileage=reviewInfo.mileage;
+
         }
+        else{
+            score=review.getDouble("rating");
+            year=review.getInteger("year");
+            mileage=review.getDouble("mileage");
+
+        }
+        Integer decRew= mileage==0.0 ? 0:1;
         System.out.println("score of the eliminated review:"+score);
         AggregationUpdate update=AggregationUpdate.update()
                 .set("Top_Ten_Review").toValue(ArrayOperators.Filter.filter("Top_Ten_Review")
@@ -126,6 +158,28 @@ public class DeleteReviewServiceImplementation{
                                 .then(ArithmeticOperators.Divide.valueOf("total_review_score").divideBy("number_of_reviews"))
                                 .otherwise(0)
                 );
+        if(year!=null){
+            update=update.set("Product_Year").toValue(
+                    new Document("$map",new Document()
+                            .append("input","$Product_Year")
+                            .append("as","yearDocu")
+                            .append("in",new Document("$cond",Arrays.asList(
+                                    new Document("$eq",Arrays.asList("$$yearDocu.Year",year)),
+                                    new Document()
+                                            .append("Year","$$yearDocu.Year")
+                                            .append("Total_Mileage",new Document("$subtract",Arrays.asList("$$yearDocu.Total_Mileage",mileage)))
+                                            .append("Num_Review_Year",new Document("$subtract",Arrays.asList("$$yearDocu.Num_Review_Year",decRew)))
+                                            .append("Average_Mileage",new Document("$cond",Arrays.asList(
+                                                            new Document("$gt",Arrays.asList(new Document("$subtract",Arrays.asList("$$yearDocu.Num_Review_Year",decRew)),0)),
+                                                            new Document("$divide",Arrays.asList(
+                                                                    new Document("$subtract",Arrays.asList("$$yearDocu.Total_Mileage",mileage)),
+                                                                    new Document("$subtract",Arrays.asList("$$yearDocu.Num_Review_Year",decRew))
+                                                    )),
+                                                    0.0
+                            ))),"$$yearDocu")))
+                    )
+            );
+        }
                 /*
         Car oldCar=mongoTemplate.findOne(query,Car.class);
         Double score=oldCar.getTopTenReview().stream()
