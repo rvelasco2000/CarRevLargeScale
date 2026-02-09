@@ -28,7 +28,7 @@ public class DeleteACarServiceImpl {
                 System.out.println("car not found (race condition)");
                 return -1;
             }
-            int deleted = neo4jCarDeleteService.deleteCarProjection(oldCar);
+            int deleted = neo4jCarDeleteService.deleteCarProjection(oldCar.getId());
             if (deleted != 1) {
                 System.out.println("neo4j mismatch on delete: deleted=" + deleted);
                 return -2; //
