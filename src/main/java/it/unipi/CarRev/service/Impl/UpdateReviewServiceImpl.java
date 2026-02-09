@@ -29,7 +29,7 @@ public class UpdateReviewServiceImpl {
     private final MongoTemplate mongoTemplate;
     private final ReviewDAO reviewDAO;
     private final AutoReviewMapper autoReviewMapper;
-    private record ReviewInfo(Double score,Integer year,Double mileage){}
+    private record ReviewInfo(Double score,Integer year,Double mileage,String text){}
 
     public UpdateReviewServiceImpl(MongoTemplate mongoTemplate, ReviewDAO reviewDAO, AutoReviewMapper autoReviewMapper, ReviewMapper reviewMapper){
         this.mongoTemplate=mongoTemplate;
@@ -49,10 +49,8 @@ public class UpdateReviewServiceImpl {
             throw new RuntimeException("User must be authenticated");
         }
         updateUserReview(DTO,username);
-        String newText=DTO.getText();
-        Double newRating=DTO.getRating();
-        Integer newYear=DTO.getYear();
-        Double newMileage=DTO.getMileage();
+        updateCarReview(DTO);
+        updateReviewReview(DTO);
 
     }
     private void updateCarReview(ReviewUpdateRequestDTO reviewUpdateRequestDTO){
@@ -60,6 +58,7 @@ public class UpdateReviewServiceImpl {
         Double oldScore=null;
         Integer oldYear=null;
         Double oldMileage=null;
+        String oldText=null;
 
         Query query=new Query(new Criteria().orOperator(
                 Criteria.where("Top_Ten_Review._id").is(objReviewId),
@@ -75,45 +74,99 @@ public class UpdateReviewServiceImpl {
             oldScore=reviewInfo.score;
             oldYear=reviewInfo.year;
             oldMileage=reviewInfo.mileage;
+            oldText=reviewInfo.text;
+
         }
         else{
             oldScore=review.getDouble("rating");
             oldYear=review.getInteger("year");
             oldMileage=review.getDouble("mileage");
+            oldText=review.getString("text");
         }
+        String newText= reviewUpdateRequestDTO.getText()!=null? reviewUpdateRequestDTO.getText() : oldText;
+        Double newScore=reviewUpdateRequestDTO.getRating()!=null? reviewUpdateRequestDTO.getRating():oldScore;
+        Double newMileage=reviewUpdateRequestDTO.getMileage()!=null?reviewUpdateRequestDTO.getMileage():oldMileage;
+        Integer newYear=reviewUpdateRequestDTO.getYear()!=null?reviewUpdateRequestDTO.getYear():oldYear;
         Integer netChange=0;
-        if (oldMileage == 0.0 && reviewUpdateRequestDTO.getMileage() > 0.0)netChange=1;
-        else if (oldMileage>0.0&&reviewUpdateRequestDTO.getMileage()==0.0) netChange = -1;
-        Double deltaScore=reviewUpdateRequestDTO.getRating()-oldScore;
-        Double deltaMileage=reviewUpdateRequestDTO.getMileage()-oldMileage;
+        if (oldMileage == 0.0&&newMileage>0.0)netChange=1;
+        else if (oldMileage>0.0&&newMileage==0.0) netChange = -1;
+        Double deltaScore=newScore-oldScore;
+        Double deltaMileage=newMileage-oldMileage;
         Integer decrNum=oldMileage>0.0?-1:0;
-        Integer upNum=reviewUpdateRequestDTO.getMileage()>0.0?1:0;
-        Document yearDocu=new Document("$map",new Document()
-                .append("input","$Product_Year")
-                .append("as","docu")
-                .append("in",new Document("$cond",Arrays.asList(
-                        new Document("$eq",Arrays.asList("$$docu.Year",oldYear)),
-                        recalculateYear("$$docu",deltaMileage,decrNum),
-                        new Document("$cond",Arrays.asList(
-                                new Document("$eq",Arrays.asList("$$docu.Year",reviewUpdateRequestDTO.getYear())),
-                                recalculateYear("$$docu",deltaMileage,upNum),
-                                "$$docu"
-                        ))
-                        ))));
+        Integer incrNum=newMileage>0.0?1:0;
+        //Integer upNum=reviewUpdateRequestDTO.getMileage()>0.0?1:0;
+        Document yearMapping;
+        if(oldYear.equals(newYear)){
+            yearMapping=new Document("$map",new Document()
+                    .append("input","$Product_Year")
+                    .append("as","yearDocu")
+                    .append("in",new Document("$cond",Arrays.asList(
+                            new Document("$eq",Arrays.asList("$$yearDocu.Year",oldYear)),
+                            recalculateYear("$$yearDocu",deltaMileage,netChange),
+                            "$$yearDocu"
+                    ))));
+        }
+        else{
+            yearMapping=new Document("$map",new Document()
+                    .append("input","$Product_Year")
+                    .append("as","yearDocu")
+                    .append("in",new Document("$cond",Arrays.asList(
+                            new Document("$eq",Arrays.asList("$$yearDocu.Year",oldYear)),
+                            recalculateYear("$$yearDocu",-oldMileage,decrNum),
+                            new Document("$cond",Arrays.asList(
+                                    new Document("$eq",Arrays.asList("$$yearDocu.Year",newYear)),
+                                    recalculateYear("$$yearDocu", newMileage,incrNum),
+                                    "$$yearDocu"
+                            ))
+                    ))));
+        }
+        AggregationUpdate update = AggregationUpdate.update()
+                .set("Top_Ten_Review").toValue(
+                        new Document("$map", new Document()
+                                .append("input", "$Top_Ten_Review")
+                                .append("as", "rev")
+                                .append("in", new Document("$cond", Arrays.asList(
+                                        new Document("$eq", Arrays.asList("$$rev._id", objReviewId)),
+                                        new Document("$mergeObjects", Arrays.asList("$$rev", new Document()
+                                                .append("rating", newScore)
+                                                .append("text", newText)
+                                                .append("mileage", newMileage)
+                                                .append("year", newYear))),
+                                        "$$rev"
+                                ))))
+                )
+                .set("total_review_score").toValue(new Document("$add", Arrays.asList("$total_review_score", deltaScore)))
+                .set("general_rating").toValue(new Document("$divide", Arrays.asList("$total_review_score", "$number_of_reviews")))
+                .set("Product_Year").toValue(yearMapping);
 
+        mongoTemplate.updateFirst(query,update,Car.class);
+        if(!oldYear.equals(reviewUpdateRequestDTO.getYear())){
+            Query insertIfNew=new Query(
+                    Criteria.where("Top_Ten_Review._id").is(objReviewId)
+                            .and("Product_Year.Year").ne(newYear)
+            );
+            Document newYearDocu = new Document()
+                    .append("Year", newYear)
+                    .append("Total_Mileage", newMileage)
+                    .append("Num_Review_Year",incrNum)
+                    .append("Average_Mileage", newMileage);
+            mongoTemplate.updateFirst(insertIfNew,new org.springframework.data.mongodb.core.query.Update().push("Product_Year",newYearDocu),Car.class);
+
+        }
+    System.out.println("review correctly modified in cars collection");
     }
-    private Document recalculateYear(String variable,Double deltaMileage,Integer decrNum){
+    private Document recalculateYear(String variable,Double deltaMileage,Integer deltaNum){
+        Document newTotal = new Document("$add", Arrays.asList(variable + ".Total_Mileage", deltaMileage));
+        Document newCount = new Document("$add", Arrays.asList(variable + ".Num_Review_Year", deltaNum));
         return new Document()
-                .append("Year",variable+".Year")
-                .append("Total_Mileage",new Document("$add",Arrays.asList(variable+".Total_Mileage",deltaMileage)))
-                .append("Num_Review_Year",new Document("$add",Arrays.asList(variable+".Num_Review_Year",decrNum)))
-                .append("Average_Mileage",new Document("$cond",Arrays.asList(
-                        new Document("$gt",Arrays.asList(new Document("$add",Arrays.asList(variable+".Num_Review_Year",decrNum)),0)),
-                        new Document("$divide",Arrays.asList(
-                                new Document("$add",Arrays.asList(variable+".Total_Mileage", deltaMileage)),
-                                new Document("$add",Arrays.asList(variable+".Num_Review_Year",decrNum)))),
-                                0.0
-                        )));
+                .append("Year", variable + ".Year")
+                .append("Total_Mileage", newTotal)
+                .append("Num_Review_Year", newCount)
+                .append("Average_Mileage", new Document("$cond", Arrays.asList(
+                        new Document("$gt", Arrays.asList(newCount, 0)),
+                        new Document("$divide", Arrays.asList(newTotal, newCount)),
+                        0.0
+                )));
     }
     private void updateReviewReview(ReviewUpdateRequestDTO reviewUpdateRequestDTO){
         Review review= reviewDAO.findById(reviewUpdateRequestDTO.getId())
@@ -143,14 +196,14 @@ public class UpdateReviewServiceImpl {
         }
         AggregationUpdate update=AggregationUpdate.update()
                 .set("reviews").toValue(
-                        new Document()
+                        new Document("$map",new Document()
                                 .append("input","$reviews")
                                 .append("as","rev")
                                 .append("in",new Document("$cond", Arrays.asList(
                                         new Document("$eq",Arrays.asList("$$rev._id",objReviewId)),
                                         new Document("$mergeObjects",Arrays.asList("$$rev",newDoc)),
                                         "$$rev"
-                                )))
+                                ))))
                 );
         User user=mongoTemplate.findAndModify(query,update,User.class);
         if(user==null){
@@ -166,7 +219,8 @@ public class UpdateReviewServiceImpl {
             return new ReviewInfo(
                     actualReview.getRating(),
                     actualReview.getYear(),
-                    actualReview.getMileage()
+                    actualReview.getMileage(),
+                    actualReview.getText()
             );
         }
         else{
