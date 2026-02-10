@@ -63,6 +63,7 @@ public class CarController {
         }
         return ResponseEntity.ok(fullCarInfoDTO);
     }
+
     //remember to lock this in the security config
     @GetMapping("/logged/lastFive")
     public ResponseEntity<List<FrontPageCarSummaryDTO>> lastFiveCar(){
