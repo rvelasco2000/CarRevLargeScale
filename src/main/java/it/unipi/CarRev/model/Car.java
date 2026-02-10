@@ -59,6 +59,7 @@ public class Car {
 
     private List<String> sales;
 
+    @Field("views")
     private Long views;
 
     @Field("Product_Year")
