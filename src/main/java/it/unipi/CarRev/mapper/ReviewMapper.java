@@ -17,7 +17,7 @@ public class ReviewMapper {
         if (docReview.get("timestamp") instanceof java.time.LocalDateTime ldt){
            review.setTimestamp(ldt);
         }
-        review.setLikes(docReview.getInteger("likes",0));
+      // review.setLikes(docReview.getInteger("likes",0));
         review.setReport(docReview.getInteger("report",0));
         if(docReview.containsKey("mileage")){
             review.setMileage(docReview.getDouble("mileage"));

@@ -63,7 +63,7 @@ public class UpdateReviewServiceImpl {
 
         Query query=new Query(new Criteria().orOperator(
                 Criteria.where("Top_Ten_Review._id").is(objReviewId),
-                Criteria.where("Other_review").is(objReviewId)
+                Criteria.where("Other_review._id").is(objReviewId)
         ));
         Car oldCar=mongoTemplate.findOne(query,Car.class);
         Document review=oldCar.getTopTenReview().stream()

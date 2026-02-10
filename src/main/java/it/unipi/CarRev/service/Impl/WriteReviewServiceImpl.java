@@ -147,7 +147,9 @@ public class WriteReviewServiceImpl {
                                 new Document("$ifNull",Arrays.asList("$otherReviews",Arrays.asList())),
                                 new Document("$cond",Arrays.asList(
                                         new Document("$gt",Arrays.asList(new Document("$size","$reviews"),10)),
-                                        Arrays.asList(new Document("$arrayElemAt",Arrays.asList("$reviews._id",10))),
+                                        Arrays.asList(new Document()
+                                                .append("_id",new Document("$arrayElemAt",Arrays.asList("$reviews._id",10)))
+                                                .append("likes",new Document("$arrayElemAt",Arrays.asList("$reviews.likes",10)))),
                                         Arrays.asList()
                                 ))
 
@@ -195,7 +197,9 @@ public class WriteReviewServiceImpl {
                                 new Document("$ifNull",Arrays.asList("$Other_review",Arrays.asList())),
                                 new Document("$cond",Arrays.asList(
                                         new Document("$gt",Arrays.asList(new Document("$size","$Top_Ten_Review"),10)),
-                                        Arrays.asList(new Document("$arrayElemAt",Arrays.asList("$Top_Ten_Review._id",10))),
+                                        Arrays.asList(new Document()
+                                                .append("_id",new Document("$arrayElemAt",Arrays.asList("$Top_Ten_Review._id",10)))
+                                                .append("likes",new Document("$arrayElemAt",Arrays.asList("$Top_Ten_Review.likes",10)))),
                                         Arrays.asList()
                                 ))
 

@@ -22,7 +22,7 @@ public class Review {
     private String text;
     private Double rating;
     private LocalDateTime timestamp;
-    private Integer likes;
+   // private Integer likes;
     @Indexed(direction= IndexDirection.DESCENDING)
     private Integer report;
     private Integer year;

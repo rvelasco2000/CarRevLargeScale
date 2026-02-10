@@ -26,7 +26,7 @@ public class User {
     private String email;
 
     private List<org.bson.Document> reviews;
-    private List<ObjectId>otherReviews;
+    private List<org.bson.Document>otherReviews;
 
     private String passwordHash;
     private boolean isAdmin;
@@ -50,7 +50,7 @@ public class User {
     public List<org.bson.Document> getReviews() {
         return reviews;
     }
-    public List<ObjectId> getOtherReviews() {
+    public List<org.bson.Document> getOtherReviews() {
         return otherReviews;
     }
 
@@ -65,7 +65,7 @@ public class User {
         this.reviews = reviews;
     }
 
-    public void setOtherReviews(List<ObjectId> otherReviews) {
+    public void setOtherReviews(List<org.bson.Document> otherReviews) {
         this.otherReviews = otherReviews;
     }
 }

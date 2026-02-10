@@ -40,7 +40,7 @@ public class InsertNewCarServiceImpl{
                 car.getPriceNew(),
                 0.0,
                 new ArrayList<Document>(),
-                new ArrayList<ObjectId>(),
+                new ArrayList<Document>(),
                 new ArrayList<String>(),
                 0L,
                 new ArrayList<Document>(),

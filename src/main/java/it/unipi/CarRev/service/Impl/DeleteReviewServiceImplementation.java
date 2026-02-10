@@ -115,7 +115,7 @@ public class DeleteReviewServiceImplementation{
 
         Query query=new Query(new Criteria().orOperator(
                 Criteria.where("Top_Ten_Review._id").is(objReviewId),
-                Criteria.where("Other_review").is(objReviewId)
+                Criteria.where("Other_review._id").is(objReviewId)
         ));
         Car oldCar=mongoTemplate.findOne(query,Car.class);
         /*
@@ -150,7 +150,7 @@ public class DeleteReviewServiceImplementation{
                         .by(ComparisonOperators.Ne.valueOf("review._id").notEqualToValue(objReviewId)))
                 .set("Other_review").toValue(ArrayOperators.Filter.filter("Other_review")
                         .as("linkedRev")
-                        .by(ComparisonOperators.Ne.valueOf("linkedRev").notEqualToValue(objReviewId)))
+                        .by(ComparisonOperators.Ne.valueOf("linkedRev._id").notEqualToValue(objReviewId)))
                 .set("total_review_score").toValue(ArithmeticOperators.Subtract.valueOf("total_review_score").subtract(score))
                 .set("number_of_reviews").toValue(ArithmeticOperators.Subtract.valueOf("number_of_reviews").subtract(1))
                 .set("general_rating").toValue(
@@ -202,7 +202,7 @@ public class DeleteReviewServiceImplementation{
             throw new ResourceNotFoundException("car not found");
         }
         if(car.getTopTenReview().size()<10 && !car.getOtherReview().isEmpty()){
-            promoteAReview(car.getId(),car.getOtherReview().getLast());
+            promoteAReview(car.getId(),car.getOtherReview().getLast().getObjectId("_id"),car.getOtherReview().getLast().getInteger("likes"));
         }
         //updateReview(car.getId());
        // return car.getId();
@@ -227,11 +227,11 @@ public class DeleteReviewServiceImplementation{
         ObjectId objReviewId=new ObjectId(reviewId);
         Query query=new Query(Criteria.where("username").is(username).orOperator(
                 Criteria.where("reviews._id").is(objReviewId),
-                Criteria.where("otherReviews").is(objReviewId))
+                Criteria.where("otherReviews._id").is(objReviewId))
         );
         Update update=new Update()
                 .pull("reviews",new Document("_id",objReviewId))
-                .pull("otherReviews",objReviewId);
+                .pull("otherReviews",new Document("_id",objReviewId));
        // UpdateResult updateResult=mongoTemplate.updateFirst(query,update,User.class);
         User user=mongoTemplate.findAndModify(query,update,FindAndModifyOptions.options().returnNew(true),User.class);
 
@@ -239,12 +239,12 @@ public class DeleteReviewServiceImplementation{
             return false;
         }
         if(user.getReviews().size()<10 && !user.getOtherReviews().isEmpty()){
-            promoteReviewInUser(username,user.getOtherReviews().getLast());
+            promoteReviewInUser(username,user.getOtherReviews().getLast().getObjectId("_id"),user.getOtherReviews().getLast().getInteger("likes"));
         }
        return true;
     }
     //very unlikely that a user will have more than 10 reviews
-    private void promoteReviewInUser(String username,ObjectId promotedReviewId){
+    private void promoteReviewInUser(String username,ObjectId promotedReviewId,Integer likes){
         Optional<Review> optReview=reviewDAO.findById(String.valueOf(promotedReviewId));
         if(optReview.isEmpty()){
             throw new ResourceNotFoundException("review to promote not found");
@@ -256,7 +256,7 @@ public class DeleteReviewServiceImplementation{
                 .append("text",review.getText())
                 .append("rating",review.getRating())
                 .append("timestamp",review.getTimestamp())
-                .append("likes",review.getLikes())
+                .append("likes",likes)
                 .append("report",review.getReport());
         if(review.getYear()!=null){
             newReview.append("year",review.getYear());
@@ -267,10 +267,10 @@ public class DeleteReviewServiceImplementation{
         Query query=new Query(Criteria.where("username").is(username));
         Update update = new Update()
                 .push("reviews",newReview)
-                .pull("otherReviews",promotedReviewId);
+                .pull("otherReviews",new Document("_id",promotedReviewId));
         mongoTemplate.updateFirst(query, update, User.class);
     }
-    private void promoteAReview(String carId,ObjectId nextReviewId){
+    private void promoteAReview(String carId,ObjectId nextReviewId,Integer likes){
         Optional<Review> optReview=reviewDAO.findById(String.valueOf(nextReviewId));
         if(optReview.isEmpty()){
             throw new ResourceNotFoundException("review to promote not found");
@@ -282,7 +282,7 @@ public class DeleteReviewServiceImplementation{
                 .append("text",review.getText())
                 .append("rating",review.getRating())
                 .append("timestamp",review.getTimestamp())
-                .append("likes",review.getLikes())
+                .append("likes",likes)
                 .append("report",review.getReport());
         if(review.getYear()!=null){
             toInputReview.append("year",review.getYear());
@@ -293,7 +293,7 @@ public class DeleteReviewServiceImplementation{
         Query query=new Query(Criteria.where("_id").is(carId));
         Update update = new Update()
                 .push("Top_Ten_Review",toInputReview)
-                .pull("Other_review",nextReviewId);
+                .pull("Other_review",new Document("_id",nextReviewId));
         mongoTemplate.updateFirst(query, update, Car.class);
     }
 }
