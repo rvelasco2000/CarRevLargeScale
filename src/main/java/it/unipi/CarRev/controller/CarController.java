@@ -3,6 +3,7 @@ package it.unipi.CarRev.controller;
 import it.unipi.CarRev.dto.*;
 import it.unipi.CarRev.service.CarSearchService;
 import it.unipi.CarRev.service.Impl.*;
+import it.unipi.CarRev.service.exception.BadRequestException;
 import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -76,7 +77,11 @@ public class CarController {
         try{
             Boolean results=writeReviewServiceImpl.writeReview(request);
             return ResponseEntity.ok("Review correctly inserted");
-        } catch (ResourceNotFoundException e) {
+        }
+        catch (BadRequestException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+        catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
         catch (Exception e){
