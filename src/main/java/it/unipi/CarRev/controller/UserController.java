@@ -3,6 +3,7 @@ package it.unipi.CarRev.controller;
 import it.unipi.CarRev.dto.ReviewUpdateRequestDTO;
 import it.unipi.CarRev.service.Impl.DeleteReviewServiceImplementation;
 import it.unipi.CarRev.service.Impl.UpdateReviewServiceImpl;
+import it.unipi.CarRev.service.exception.BadRequestException;
 import it.unipi.CarRev.service.exception.ForbiddenException;
 import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import jakarta.annotation.Resource;
@@ -26,6 +27,9 @@ public class UserController {
         try{
             updateReviewService.updateReview(request);
             return ResponseEntity.ok("review correctly updated");
+        }
+        catch (BadRequestException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
         catch(ResourceNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

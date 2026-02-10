@@ -7,6 +7,7 @@ import it.unipi.CarRev.mapper.ReviewMapper;
 import it.unipi.CarRev.model.Car;
 import it.unipi.CarRev.model.Review;
 import it.unipi.CarRev.model.User;
+import it.unipi.CarRev.service.exception.BadRequestException;
 import it.unipi.CarRev.service.exception.ForbiddenException;
 import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import org.bson.Document;
@@ -65,7 +66,6 @@ public class UpdateReviewServiceImpl {
                 Criteria.where("Other_review").is(objReviewId)
         ));
         Car oldCar=mongoTemplate.findOne(query,Car.class);
-
         Document review=oldCar.getTopTenReview().stream()
                 .filter(embReview->embReview.get("_id").equals(objReviewId))
                 .findFirst().orElse(null);
@@ -83,10 +83,16 @@ public class UpdateReviewServiceImpl {
             oldMileage=review.getDouble("mileage");
             oldText=review.getString("text");
         }
+        if(oldMileage==null){
+            oldMileage=0.0;
+        }
         String newText= reviewUpdateRequestDTO.getText()!=null? reviewUpdateRequestDTO.getText() : oldText;
         Double newScore=reviewUpdateRequestDTO.getRating()!=null? reviewUpdateRequestDTO.getRating():oldScore;
         Double newMileage=reviewUpdateRequestDTO.getMileage()!=null?reviewUpdateRequestDTO.getMileage():oldMileage;
         Integer newYear=reviewUpdateRequestDTO.getYear()!=null?reviewUpdateRequestDTO.getYear():oldYear;
+        if(newYear<oldCar.getProduction_year()){
+            throw new BadRequestException("you cannot update a review to a year before production_year");
+        }
         Integer netChange=0;
         if (oldMileage == 0.0&&newMileage>0.0)netChange=1;
         else if (oldMileage>0.0&&newMileage==0.0) netChange = -1;
