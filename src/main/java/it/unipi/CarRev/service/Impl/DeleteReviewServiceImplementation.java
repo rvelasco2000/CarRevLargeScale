@@ -142,7 +142,7 @@ public class DeleteReviewServiceImplementation{
             mileage=review.getDouble("mileage");
 
         }
-        Integer decRew= mileage==0.0 ? 0:1;
+        Integer decRew= mileage==null || mileage==0.0 ? 0:1;
         System.out.println("score of the eliminated review:"+score);
         AggregationUpdate update=AggregationUpdate.update()
                 .set("Top_Ten_Review").toValue(ArrayOperators.Filter.filter("Top_Ten_Review")

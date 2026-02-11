@@ -46,22 +46,40 @@ public class ScheduledUpdateLikesImplementation {
                 if(numOfLikes==0){
                     continue;
                 }
+                /*
                 Query reviewQuery=new Query(Criteria.where("id").is(reviewId));
                 Update reviewUpdate=new Update().inc("likes",numOfLikes);
+                 */
 
-                Query userQuery=new Query(Criteria.where("reviews._id").is(reviewIdObj));
-                Update userUpdate=new Update().inc("reviews.$.likes",numOfLikes);
+                Query userQuery=new Query(new Criteria().orOperator(
+                        Criteria.where("reviews._id").is(reviewIdObj),
+                        Criteria.where("otherReviews._id").is(reviewIdObj)
+                ));
+                Update userUpdate=new Update()
+                        .filterArray(Criteria.where("rev._id").is(reviewIdObj))
+                        .inc("reviews.$[rev].likes",numOfLikes)
+                        .filterArray(Criteria.where("otherRev._id").is(reviewIdObj))
+                        .inc("otherReviews.$[otherRev].likes",numOfLikes);
 
-                Query carQuery=new Query(Criteria.where("Top_Ten_Review._id").is(reviewIdObj));
-                Update carUpdate=new Update().inc("Top_Ten_Review.$.likes",numOfLikes);
 
-                reviewOps.updateOne(reviewQuery,reviewUpdate);
+                Query carQuery=new Query(new Criteria().orOperator(
+                        Criteria.where("Top_Ten_Review._id").is(reviewIdObj),
+                        Criteria.where("Other_review._id").is(reviewIdObj)
+                ));
+                Update carUpdate=new Update()
+                        .filterArray(Criteria.where("rev._id").is(reviewIdObj))
+                        .inc("Top_Ten_Review.$[rev].likes",numOfLikes)
+                        .filterArray(Criteria.where("otherRev._id").is(reviewIdObj))
+                        .inc("Other_review.$[otherRev].likes",numOfLikes);
+
+
+               // reviewOps.updateOne(reviewQuery,reviewUpdate);
                 userOps.updateOne(userQuery,userUpdate);
                 carOps.updateOne(carQuery,carUpdate);
                 hasOps=true;
             }
             if(hasOps){
-                reviewOps.execute();
+               // reviewOps.execute();
                 userOps.execute();
                 carOps.execute();
                 System.out.println("migration of likes from redis to mongoDB has been successful");
