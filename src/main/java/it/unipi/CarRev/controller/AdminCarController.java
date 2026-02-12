@@ -2,12 +2,11 @@ package it.unipi.CarRev.controller;
 
 import it.unipi.CarRev.dto.CarCreateRequestDTO;
 import it.unipi.CarRev.dto.CarUpdateRequestDTO;
-import it.unipi.CarRev.service.Impl.DeleteACarServiceImpl;
-import it.unipi.CarRev.service.Impl.InsertNewCarServiceImpl;
-import it.unipi.CarRev.service.Impl.ProductYearRecomputeService;
-import it.unipi.CarRev.service.Impl.UpdateCarServiceImpl;
+import it.unipi.CarRev.dto.ReportedReviewResponseDTO;
+import it.unipi.CarRev.service.Impl.*;
 import jakarta.validation.Valid;
 import org.apache.coyote.Response;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,11 +20,13 @@ public class AdminCarController {
     private final InsertNewCarServiceImpl insertNewCarService;
     private final UpdateCarServiceImpl updateCarService;
     private final DeleteACarServiceImpl deleteACarService;
-    public AdminCarController(ProductYearRecomputeService productYearRecomputeService, InsertNewCarServiceImpl insertNewCarService, UpdateCarServiceImpl updateCarService,DeleteACarServiceImpl deleteACarService){
+    private final GetReportedReviewsServiceImplementation getReportedReviewsServiceImplementation;
+    public AdminCarController(ProductYearRecomputeService productYearRecomputeService, InsertNewCarServiceImpl insertNewCarService, UpdateCarServiceImpl updateCarService,DeleteACarServiceImpl deleteACarService, GetReportedReviewsServiceImplementation getReportedReviewsServiceImplementation){
         this.productYearRecomputeService = productYearRecomputeService;
         this.insertNewCarService=insertNewCarService;
         this.updateCarService=updateCarService;
         this.deleteACarService=deleteACarService;
+        this.getReportedReviewsServiceImplementation=getReportedReviewsServiceImplementation;
     }
 
     @PostMapping("/insert")
@@ -83,5 +84,12 @@ public class AdminCarController {
     public ResponseEntity<Map<String, Object>> recomputeProductYear() {
         int updated = productYearRecomputeService.recomputeAllCars();
         return ResponseEntity.ok(Map.of("updatedCars", updated));
+    }
+    @GetMapping("/showReportedReviews")
+    public ResponseEntity<Page<ReportedReviewResponseDTO>> getReportedReviews(Integer numPage){
+
+
+        Page<ReportedReviewResponseDTO> result=getReportedReviewsServiceImplementation.getReportedReviews(numPage);
+        return ResponseEntity.ok(result);
     }
 }
