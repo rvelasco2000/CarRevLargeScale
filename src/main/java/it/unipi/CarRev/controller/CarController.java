@@ -7,6 +7,10 @@ import it.unipi.CarRev.service.exception.BadRequestException;
 import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,14 +27,16 @@ public class CarController {
     private final WriteReviewServiceImpl writeReviewServiceImpl;
     private final CachedReportAReviewServiceImplementation cachedReportAReviewServiceImplementation;
     private final CachedLikeAReviewServiceImplementation cachedLikeAReviewServiceImplementation;
+    private final ShowMostLikedReviewsServiceImplementation showMostLikedReviewsServiceImplementation;
 
-    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation, WriteReviewServiceImpl writeReviewServiceImpl, CachedReportAReviewServiceImplementation cachedReportAReviewServiceImplementation,CachedLikeAReviewServiceImplementation cachedLikeAReviewServiceImplementation) {
+    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation, WriteReviewServiceImpl writeReviewServiceImpl, CachedReportAReviewServiceImplementation cachedReportAReviewServiceImplementation,CachedLikeAReviewServiceImplementation cachedLikeAReviewServiceImplementation,ShowMostLikedReviewsServiceImplementation showMostLikedReviewsServiceImplementation) {
         this.carSearchService = carSearchService;
         this.visitACarService = visitACarService;
         this.lastFiveCarServiceImplementation=lastFiveCarServiceImplementation;
         this.writeReviewServiceImpl = writeReviewServiceImpl;
         this.cachedReportAReviewServiceImplementation=cachedReportAReviewServiceImplementation;
         this.cachedLikeAReviewServiceImplementation=cachedLikeAReviewServiceImplementation;
+        this.showMostLikedReviewsServiceImplementation=showMostLikedReviewsServiceImplementation;
     }
 
     @GetMapping
@@ -101,5 +107,15 @@ public class CarController {
     public ResponseEntity<String> likeAReview(@NotNull @RequestParam String reviewId){
         cachedLikeAReviewServiceImplementation.likeAReview(reviewId);
         return ResponseEntity.ok("review correctly liked");
+    }
+    @GetMapping("/mostLikedReviews")
+    public ResponseEntity<?> getMostLikedReviews(@NotNull@RequestParam String carId,@PageableDefault(size = 10)Pageable pageable){
+        try{
+            Page<ReviewResponseDTO> mostLikedReviews=showMostLikedReviewsServiceImplementation.getMostLikedReviews(carId,pageable);
+            return ResponseEntity.ok(mostLikedReviews);
+        }
+        catch (ResourceNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 }
