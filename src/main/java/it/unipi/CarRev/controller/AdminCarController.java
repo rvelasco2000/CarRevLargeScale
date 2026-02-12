@@ -4,9 +4,12 @@ import it.unipi.CarRev.dto.CarCreateRequestDTO;
 import it.unipi.CarRev.dto.CarUpdateRequestDTO;
 import it.unipi.CarRev.dto.ReportedReviewResponseDTO;
 import it.unipi.CarRev.service.Impl.*;
+import it.unipi.CarRev.service.exception.ForbiddenException;
+import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
 import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,12 +24,14 @@ public class AdminCarController {
     private final UpdateCarServiceImpl updateCarService;
     private final DeleteACarServiceImpl deleteACarService;
     private final GetReportedReviewsServiceImplementation getReportedReviewsServiceImplementation;
-    public AdminCarController(ProductYearRecomputeService productYearRecomputeService, InsertNewCarServiceImpl insertNewCarService, UpdateCarServiceImpl updateCarService,DeleteACarServiceImpl deleteACarService, GetReportedReviewsServiceImplementation getReportedReviewsServiceImplementation){
+    private final ClearAReviewReportServiceImplementation clearAReviewReportServiceImplementation;
+    public AdminCarController(ProductYearRecomputeService productYearRecomputeService, InsertNewCarServiceImpl insertNewCarService, UpdateCarServiceImpl updateCarService,DeleteACarServiceImpl deleteACarService, GetReportedReviewsServiceImplementation getReportedReviewsServiceImplementation, ClearAReviewReportServiceImplementation clearAReviewReportServiceImplementation){
         this.productYearRecomputeService = productYearRecomputeService;
         this.insertNewCarService=insertNewCarService;
         this.updateCarService=updateCarService;
         this.deleteACarService=deleteACarService;
         this.getReportedReviewsServiceImplementation=getReportedReviewsServiceImplementation;
+        this.clearAReviewReportServiceImplementation=clearAReviewReportServiceImplementation;
     }
 
     @PostMapping("/insert")
@@ -91,5 +96,21 @@ public class AdminCarController {
 
         Page<ReportedReviewResponseDTO> result=getReportedReviewsServiceImplementation.getReportedReviews(numPage);
         return ResponseEntity.ok(result);
+    }
+    @GetMapping("/resetReport")
+    public ResponseEntity<String> resetReport(String reviewId){
+        try{
+            clearAReviewReportServiceImplementation.clearAReview(reviewId);
+            return ResponseEntity.ok("report in reviews has been reset");
+        }
+        catch(ForbiddenException e){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+        catch (ResourceNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch (RuntimeException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("error during the reset of reports");
+        }
     }
 }
