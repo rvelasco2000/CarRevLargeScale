@@ -2,6 +2,7 @@ package it.unipi.CarRev.controller;
 
 import it.unipi.CarRev.dto.ReviewUpdateRequestDTO;
 import it.unipi.CarRev.service.Impl.DeleteReviewServiceImplementation;
+import it.unipi.CarRev.service.Impl.DeleteUserServiceImplementation;
 import it.unipi.CarRev.service.Impl.UpdateReviewServiceImpl;
 import it.unipi.CarRev.service.exception.BadRequestException;
 import it.unipi.CarRev.service.exception.ForbiddenException;
@@ -18,9 +19,25 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final DeleteReviewServiceImplementation deleteReviewServiceImplementation;
     private final UpdateReviewServiceImpl updateReviewService;
-    public UserController(DeleteReviewServiceImplementation deleteReviewServiceImplementation,UpdateReviewServiceImpl updateReviewService){
+    private final DeleteUserServiceImplementation deleteUserServiceImplementation;
+    public UserController(DeleteReviewServiceImplementation deleteReviewServiceImplementation,UpdateReviewServiceImpl updateReviewService,DeleteUserServiceImplementation deleteUserServiceImplementation){
         this.deleteReviewServiceImplementation=deleteReviewServiceImplementation;
         this.updateReviewService=updateReviewService;
+        this.deleteUserServiceImplementation=deleteUserServiceImplementation;
+    }
+    @GetMapping("/deleteAccount")
+    public ResponseEntity<String> deleteAccount(){
+        try{
+            deleteUserServiceImplementation.deleteAUser();
+            return ResponseEntity.ok("account correctly deleted");
+        }
+        catch (ForbiddenException e){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+        catch (RuntimeException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("error during the delete of the account");
+        }
+
     }
     @PostMapping("/updateReview")
     public ResponseEntity<String> updateReview(@Valid @RequestBody ReviewUpdateRequestDTO request){
