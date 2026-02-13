@@ -7,6 +7,7 @@ import it.unipi.CarRev.model.Car;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import it.unipi.CarRev.service.Neo4jCarInsertService;
 
@@ -50,8 +51,8 @@ public class InsertNewCarServiceImpl{
 
         );
         try{
-            carDAO.save(newCar);
-        //    neo4jService.insertCar(car); // Neo4j
+           Car saved = carDAO.save(newCar);
+            neo4jService.insertCar(saved); // Neo4j
             return true;
         }
         catch(Exception e){
