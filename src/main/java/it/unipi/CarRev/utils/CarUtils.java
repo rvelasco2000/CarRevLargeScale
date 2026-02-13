@@ -57,7 +57,9 @@ public class CarUtils {
             List<Document> readableYear=car.getProductYear().stream()
                     .map(doc->new Document()
                             .append("Year",doc.get("Year"))
-                            .append("Average_Mileage",doc.get("Average_Mileage")))
+                            .append("Average_used_mileage",doc.get("Average_used_mileage"))
+                            .append("Average_used_price",doc.get("Average_used_price"))
+                            .append("Sales_count",doc.get("Sales_count")))
                     .toList();
             dto.setProductYear(readableYear);
         }
