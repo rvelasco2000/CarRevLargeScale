@@ -39,7 +39,15 @@ public class CarUtils {
             dto.setTopTenReview(readableReviews);
         }
         if(car.getOtherReview()!=null){
-            dto.setOtherReview(car.getOtherReview().stream().map(oid->oid.toHexString()).toList());
+           List<Document> readableOtherReviews=car.getOtherReview().stream()
+                   .map(doc->{
+                       Document newDoc=new Document(doc);
+                       if(newDoc.get("_id") instanceof ObjectId oid){
+                           newDoc.put("_id",oid.toHexString());
+                       }
+                       return newDoc;
+                   }).toList();
+            dto.setOtherReview(readableOtherReviews);
         }
         //dto.setOtherReview(car.getOtherReview());
         dto.setSales(car.getSales());

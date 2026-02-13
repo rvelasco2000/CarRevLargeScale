@@ -11,6 +11,7 @@ import java.util.List;
 //testing
 @Document(collection = "cars")
 @CompoundIndex(def="{'Top_Ten_Review._id':1}",name="index_for_embedded_reviews_in_car")
+@CompoundIndex(def="{'Other_review._id':1}",name="index_for_linked_reviews_in_car")
 public class Car {
 
     @Id
@@ -55,7 +56,7 @@ public class Car {
     private List<org.bson.Document> topTenReview;
 
     @Field("Other_review")
-    private List<ObjectId> otherReview;
+    private List<org.bson.Document> otherReview;
 
     private List<String> sales;
 
@@ -75,7 +76,7 @@ public class Car {
     private Integer numberOfReviews;
 
 
-    public Car(String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<org.bson.Document> topTenReview, List<ObjectId> otherReview, List<String> sales, Long views, List<org.bson.Document> productYear, Integer production_year, Double totalScore, Integer numberOfReviews){
+    public Car(String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<org.bson.Document> topTenReview, List<org.bson.Document> otherReview, List<String> sales, Long views, List<org.bson.Document> productYear, Integer production_year, Double totalScore, Integer numberOfReviews){
         this.carName = carName;
         this.carBrand = carBrand;
         this.carModel = carModel;
@@ -116,7 +117,7 @@ public class Car {
     public Double getPriceNew() { return priceNew; }
     public Double getGeneralRating() { return generalRating; }
     public List<org.bson.Document> getTopTenReview() { return topTenReview; }
-    public List<ObjectId> getOtherReview() { return otherReview; }
+    public List<org.bson.Document> getOtherReview() { return otherReview; }
     public List<String> getSales() { return sales; }
     public Long getViews() { return views; }
     public List<org.bson.Document> getProductYear() { return productYear; }
@@ -140,7 +141,7 @@ public class Car {
     public void setPriceNew(Double priceNew) { this.priceNew = priceNew; }
     public void setGeneralRating(Double generalRating) { this.generalRating = generalRating; }
     public void setTopTenReview(List<org.bson.Document> topTenReview) { this.topTenReview = topTenReview; }
-    public void setOtherReview(List<ObjectId> otherReview) { this.otherReview = otherReview; }
+    public void setOtherReview(List<org.bson.Document> otherReview) { this.otherReview = otherReview; }
     public void setSales(List<String> sales) { this.sales = sales; }
     public void setViews(Long views) { this.views = views; }
     public void setProduction_year(Integer production_year) { this.production_year = production_year; }

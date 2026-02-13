@@ -3,12 +3,14 @@ package it.unipi.CarRev.service;
 import it.unipi.CarRev.model.Car;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 //test
 @Service
+@Async
 public class Neo4jUpdateService {
 
     public enum UpdateOutcome { OK, NOT_FOUND, ERROR }
@@ -19,21 +21,13 @@ public class Neo4jUpdateService {
         this.driver = driver;
     }
 
-    public UpdateOutcome updateCarByOldSuperKey(Car oldCar, Car newCar) {
+    public UpdateOutcome updateCarByMongoId(String id, Car newCar) {
         String cypher = """
        
         MATCH (c:Car)
-        WHERE toLower(c.car_brand) = toLower($old_brand)
-          AND toLower(c.car_model) = toLower($old_model)
-          AND ( (c.production_year IS NULL AND $old_year IS NULL) OR c.production_year = $old_year )
-          AND ( (c.engine_displacement IS NULL AND $old_disp IS NULL) OR c.engine_displacement = $old_disp )
-          AND ( (c.fuel_type IS NULL AND $old_fuel IS NULL) OR toLower(c.fuel_type) = toLower($old_fuel) )
-          AND ( (c.transmission_type IS NULL AND $old_trans IS NULL) OR toLower(c.transmission_type) = toLower($old_trans) )
-        
-        WITH c
-        LIMIT 1
-        
-        
+        WHERE c.mongo_id = $mongo_id
+     
+       
         SET c.car_name = coalesce($new_name, c.car_name),
             c.car_brand = coalesce(toLower($new_brand), c.car_brand),
             c.car_model = coalesce(toLower($new_model), c.car_model),
@@ -115,7 +109,7 @@ public class Neo4jUpdateService {
                 RETURN 1 AS ok
         """;
 
-        Map<String, Object> params = buildParams(oldCar, newCar);
+        Map<String, Object> params = buildParams(id,newCar);
 
         try (Session session = driver.session()) {
             var result = session.run(cypher, params);
@@ -128,22 +122,12 @@ public class Neo4jUpdateService {
     }
 
 
-    public UpdateOutcome rollbackToOld(Car oldSnapshot, Car newSnapshot) {
-        return updateCarByOldSuperKey(newSnapshot, oldSnapshot);
-    }
 
-    private Map<String, Object> buildParams(Car oldCar, Car newCar) {
+
+    private Map<String, Object> buildParams( String id,Car newCar) {
         Map<String, Object> p = new HashMap<>();
-
-        // OLD key
-        p.put("old_brand", oldCar.getCarBrand());
-        p.put("old_model", oldCar.getCarModel());
-        p.put("old_year", oldCar.getProduction_year());
-        p.put("old_disp", oldCar.getEngineDisplacement());
-        p.put("old_fuel", oldCar.getFuelType());
-        p.put("old_trans", oldCar.getTransmissionType());
-
         // NEW values
+        p.put("mongo_id",id);
         p.put("new_name", newCar.getCarName());
         p.put("new_brand", newCar.getCarBrand());
         p.put("new_model", newCar.getCarModel());

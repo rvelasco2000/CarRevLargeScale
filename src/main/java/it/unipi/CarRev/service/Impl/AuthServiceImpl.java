@@ -38,6 +38,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse register(String username, String email, String password) {
+        if(username.equals("Deleted User")){
+            throw new RuntimeException("you cannot use this username");
+        }
         if (userDAO.existsByUsername(username)) {
             throw new RuntimeException("Username already exists");
         }

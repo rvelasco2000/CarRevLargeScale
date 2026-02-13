@@ -9,6 +9,7 @@ import it.unipi.CarRev.dao.mongo.projection.CarName;
 import it.unipi.CarRev.dto.InsertReviewRequestDTO;
 import it.unipi.CarRev.mapper.ReviewMapper;
 import it.unipi.CarRev.model.Review;
+import it.unipi.CarRev.service.exception.BadRequestException;
 import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -26,6 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 import redis.clients.jedis.Jedis;
 
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -62,6 +64,7 @@ public class WriteReviewServiceImpl {
         if(carName==null){
             throw new ResourceNotFoundException("cannot find car with this id");
         }
+        checkRequest(insertReviewRequestDTO,carName.getProduction_year());
         Document newReview=returnDocumentFromDTO(insertReviewRequestDTO,carName);
         Review review=reviewMapper.mapDocumentToReview(newReview,username);
         System.out.println(review.getText());
@@ -72,6 +75,25 @@ public class WriteReviewServiceImpl {
         insertIntoCarCollection(newReview,insertReviewRequestDTO.getCarId(),username);
        // insertScoreInformationInRedisAfterCommit(insertReviewRequestDTO.getRating(), insertReviewRequestDTO.getCarId());
         return true;
+    }
+    private void checkRequest(InsertReviewRequestDTO dto,Integer productionYear){
+        Integer year=dto.getYear();
+        Double mileage=dto.getMileage();
+        Integer currentYear=Year.now().getValue();
+        if(year==null && mileage!=null){
+            throw new BadRequestException("you cannot specify a mileage without a year");
+        }
+        if(year==null){
+            return;
+        }
+        if(year<productionYear){
+            throw new BadRequestException("you cannot insert a year review prior to production year");
+        }
+        if(year>currentYear){
+            throw new BadRequestException("you cannot insert a year review in the future");
+        }
+
+
     }
     /*
     private void insertScoreInformationInRedisAfterCommit(Double score,String carId){
@@ -125,7 +147,9 @@ public class WriteReviewServiceImpl {
                                 new Document("$ifNull",Arrays.asList("$otherReviews",Arrays.asList())),
                                 new Document("$cond",Arrays.asList(
                                         new Document("$gt",Arrays.asList(new Document("$size","$reviews"),10)),
-                                        Arrays.asList(new Document("$arrayElemAt",Arrays.asList("$reviews._id",10))),
+                                        Arrays.asList(new Document()
+                                                .append("_id",new Document("$arrayElemAt",Arrays.asList("$reviews._id",10)))
+                                                .append("likes",new Document("$arrayElemAt",Arrays.asList("$reviews.likes",10)))),
                                         Arrays.asList()
                                 ))
 
@@ -156,6 +180,7 @@ public class WriteReviewServiceImpl {
         Integer increment=1;
         if(reviewMileage==null || reviewMileage==0.0){
             increment=0;
+            reviewMileage=0.0;
         }
 
 
@@ -172,7 +197,9 @@ public class WriteReviewServiceImpl {
                                 new Document("$ifNull",Arrays.asList("$Other_review",Arrays.asList())),
                                 new Document("$cond",Arrays.asList(
                                         new Document("$gt",Arrays.asList(new Document("$size","$Top_Ten_Review"),10)),
-                                        Arrays.asList(new Document("$arrayElemAt",Arrays.asList("$Top_Ten_Review._id",10))),
+                                        Arrays.asList(new Document()
+                                                .append("_id",new Document("$arrayElemAt",Arrays.asList("$Top_Ten_Review._id",10)))
+                                                .append("likes",new Document("$arrayElemAt",Arrays.asList("$Top_Ten_Review.likes",10)))),
                                         Arrays.asList()
                                 ))
 
