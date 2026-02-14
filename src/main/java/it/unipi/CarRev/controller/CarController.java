@@ -28,8 +28,9 @@ public class CarController {
     private final CachedReportAReviewServiceImplementation cachedReportAReviewServiceImplementation;
     private final CachedLikeAReviewServiceImplementation cachedLikeAReviewServiceImplementation;
     private final ShowMostLikedReviewsServiceImplementation showMostLikedReviewsServiceImplementation;
+    private final ShowReviewForACarInTimestampOrder showReviewForACarInTimestampOrder;
 
-    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation, WriteReviewServiceImpl writeReviewServiceImpl, CachedReportAReviewServiceImplementation cachedReportAReviewServiceImplementation,CachedLikeAReviewServiceImplementation cachedLikeAReviewServiceImplementation,ShowMostLikedReviewsServiceImplementation showMostLikedReviewsServiceImplementation) {
+    public CarController(CarSearchService carSearchService, VisitACarService visitACarService, LastFiveCarServiceImplementation lastFiveCarServiceImplementation, WriteReviewServiceImpl writeReviewServiceImpl, CachedReportAReviewServiceImplementation cachedReportAReviewServiceImplementation,CachedLikeAReviewServiceImplementation cachedLikeAReviewServiceImplementation,ShowMostLikedReviewsServiceImplementation showMostLikedReviewsServiceImplementation, ShowReviewForACarInTimestampOrder showReviewForACarInTimestampOrder) {
         this.carSearchService = carSearchService;
         this.visitACarService = visitACarService;
         this.lastFiveCarServiceImplementation=lastFiveCarServiceImplementation;
@@ -37,6 +38,7 @@ public class CarController {
         this.cachedReportAReviewServiceImplementation=cachedReportAReviewServiceImplementation;
         this.cachedLikeAReviewServiceImplementation=cachedLikeAReviewServiceImplementation;
         this.showMostLikedReviewsServiceImplementation=showMostLikedReviewsServiceImplementation;
+        this.showReviewForACarInTimestampOrder=showReviewForACarInTimestampOrder;
     }
 
     @GetMapping
@@ -116,6 +118,19 @@ public class CarController {
         }
         catch (ResourceNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+    @GetMapping("/otherReviews")
+    public ResponseEntity<?> getOtherReviews(@NotNull@RequestParam String carId,@NotNull Integer numPage){
+        try{
+            Page<ReviewResponseDTO> reviews=showReviewForACarInTimestampOrder.getReviewsByTimestamp(carId,numPage);
+            return ResponseEntity.ok(reviews);
+        }
+        catch (ResourceNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch(RuntimeException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("an error has occurred while fetching the review");
         }
     }
 }
