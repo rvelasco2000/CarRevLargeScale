@@ -72,7 +72,18 @@ public class AdminCarController {
      */
     @PostMapping("/delete")
     public ResponseEntity<String> deleteCar(@RequestParam(required = true) String id){
-        int results=deleteACarService.deleteCar(id);
+        try{
+            deleteACarService.deleteCar(id);
+            return ResponseEntity.ok("car successfully deleted");
+        }
+        catch(ResourceNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch(RuntimeException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+        //int results=deleteACarService.deleteCar(id);
+        /*
         switch(results){
             case -1:
                 return ResponseEntity.notFound().build();
@@ -82,7 +93,7 @@ public class AdminCarController {
                 return ResponseEntity.ok("car has been successfully deleted");
         }
         return ResponseEntity.internalServerError().body("an error has occurred during the delete of a car");
-
+        */
 
     }
     @PostMapping("/recompute-product-year")
