@@ -6,6 +6,7 @@ import it.unipi.CarRev.dao.mongo.CarDAO;
 import it.unipi.CarRev.model.Car;
 import org.springframework.stereotype.Service;
 import it.unipi.CarRev.service.Neo4jCarDeleteService;
+import org.springframework.transaction.annotation.Transactional;
 import redis.clients.jedis.Jedis;
 
 @Service
@@ -17,6 +18,7 @@ public class DeleteACarServiceImpl {
         this.neo4jCarDeleteService = neo4jCarDeleteService;
     }
 
+    @Transactional("mongoTransactionManager")
     public int deleteCar(String id){
         try {
             if(!carDAO.existsById(id)){
