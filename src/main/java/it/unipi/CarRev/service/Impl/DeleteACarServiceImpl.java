@@ -33,7 +33,6 @@ public class DeleteACarServiceImpl {
         this.neo4jCarDeleteService = neo4jCarDeleteService;
         this.mongoTemplate=mongoTemplate;
     }
-
     @Transactional("mongoTransactionManager")
     public void deleteCar(String id){
         try {

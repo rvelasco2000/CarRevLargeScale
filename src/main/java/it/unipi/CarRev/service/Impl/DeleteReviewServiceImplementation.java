@@ -118,6 +118,10 @@ public class DeleteReviewServiceImplementation{
                 Criteria.where("Other_review._id").is(objReviewId)
         ));
         Car oldCar=mongoTemplate.findOne(query,Car.class);
+        if(oldCar==null){
+            System.out.println("the car has been correctly deleted");
+            return;
+        }
         /*
         Double score=oldCar.getTopTenReview().stream()
                 .filter(embReview->embReview.get("_id").equals(objReviewId))
