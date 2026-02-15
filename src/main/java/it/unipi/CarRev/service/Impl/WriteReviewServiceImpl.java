@@ -206,6 +206,7 @@ public class WriteReviewServiceImpl {
                         )))),
                 new Document("$set",new Document("Top_Ten_Review",
                         new Document("$slice",Arrays.asList("$Top_Ten_Review",10)))),
+                /*
                 new Document("$set", new Document("Product_Year",reviewYear==null?"$Product_Year": new Document("$cond", Arrays.asList(
                         new Document("$in", Arrays.asList(reviewYear, new Document("$ifNull", Arrays.asList("$Product_Year.Year", Arrays.asList())))),
                         new Document("$map", new Document()
@@ -236,7 +237,7 @@ public class WriteReviewServiceImpl {
                                         .append("Num_Review_Year", increment)
                                         .append("Average_Mileage", reviewMileage)) : Arrays.asList()
                         ))
-                )))),
+                )))),*/
                 new Document("$set", new Document()
                         .append("total_review_score", new Document("$add", Arrays.asList(
                                 new Document("$ifNull", Arrays.asList("$total_review_score", 0)), newReview.getDouble("rating"))))

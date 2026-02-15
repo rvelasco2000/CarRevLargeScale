@@ -39,6 +39,9 @@ public class SecurityConfig {
                                 "/swagger-auth.js"
                         ).permitAll()
                         .requestMatchers(
+                                "/api/general/**"
+                        ).permitAll()
+                        .requestMatchers(
                                 "/api/user/**"
                         ).authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/test/neo4j/ping").permitAll()
