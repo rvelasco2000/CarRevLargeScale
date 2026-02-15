@@ -7,6 +7,7 @@ import it.unipi.CarRev.service.Impl.*;
 import it.unipi.CarRev.service.exception.ForbiddenException;
 import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -25,13 +26,28 @@ public class AdminCarController {
     private final DeleteACarServiceImpl deleteACarService;
     private final GetReportedReviewsServiceImplementation getReportedReviewsServiceImplementation;
     private final ClearAReviewReportServiceImplementation clearAReviewReportServiceImplementation;
-    public AdminCarController(ProductYearRecomputeService productYearRecomputeService, InsertNewCarServiceImpl insertNewCarService, UpdateCarServiceImpl updateCarService,DeleteACarServiceImpl deleteACarService, GetReportedReviewsServiceImplementation getReportedReviewsServiceImplementation, ClearAReviewReportServiceImplementation clearAReviewReportServiceImplementation){
+    private final DeleteReviewServiceImplementation deleteReviewServiceImplementation;
+    public AdminCarController(ProductYearRecomputeService productYearRecomputeService, InsertNewCarServiceImpl insertNewCarService, UpdateCarServiceImpl updateCarService,DeleteACarServiceImpl deleteACarService, GetReportedReviewsServiceImplementation getReportedReviewsServiceImplementation, ClearAReviewReportServiceImplementation clearAReviewReportServiceImplementation,DeleteReviewServiceImplementation deleteReviewServiceImplementation){
         this.productYearRecomputeService = productYearRecomputeService;
         this.insertNewCarService=insertNewCarService;
         this.updateCarService=updateCarService;
         this.deleteACarService=deleteACarService;
         this.getReportedReviewsServiceImplementation=getReportedReviewsServiceImplementation;
         this.clearAReviewReportServiceImplementation=clearAReviewReportServiceImplementation;
+        this.deleteReviewServiceImplementation=deleteReviewServiceImplementation;
+    }
+    @GetMapping("/deleteReview")
+    public ResponseEntity<String> deleteReview(@NotNull @RequestParam String reviewId){
+        try {
+            deleteReviewServiceImplementation.deleteAReview(reviewId);
+            return ResponseEntity.ok("reviews correctly deleted");
+        }
+        catch(ResourceNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch (Exception e){
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
 
     @PostMapping("/insert")
@@ -72,7 +88,18 @@ public class AdminCarController {
      */
     @PostMapping("/delete")
     public ResponseEntity<String> deleteCar(@RequestParam(required = true) String id){
-        int results=deleteACarService.deleteCar(id);
+        try{
+            deleteACarService.deleteCar(id);
+            return ResponseEntity.ok("car successfully deleted");
+        }
+        catch(ResourceNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch(RuntimeException e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+        //int results=deleteACarService.deleteCar(id);
+        /*
         switch(results){
             case -1:
                 return ResponseEntity.notFound().build();
@@ -82,7 +109,7 @@ public class AdminCarController {
                 return ResponseEntity.ok("car has been successfully deleted");
         }
         return ResponseEntity.internalServerError().body("an error has occurred during the delete of a car");
-
+        */
 
     }
     @PostMapping("/recompute-product-year")

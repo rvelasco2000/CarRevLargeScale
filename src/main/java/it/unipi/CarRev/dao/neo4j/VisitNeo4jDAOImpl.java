@@ -25,7 +25,12 @@ WHERE
 
 MERGE (u)-[v:HAS_VISITED]->(c)
 SET v.lastSeen = datetime()
-RETURN count(c) AS matched;
+ WITH u
+ MATCH (u)-[old:HAS_VISITED]->(:Car)
+ WITH u, old
+ ORDER BY old.lastSeen DESC
+ SKIP 5
+ DELETE old;
         """)
                 .bind(username).to("username")
                 .bind(car.getId()).to("mongo_id")
