@@ -54,6 +54,7 @@ public class BotDetectionService {
         }
     }
     public void mapIpToUsername(String username,String ip){
+        System.out.println(ip);
         String oldStatusKey="TrafficLog:"+ip+":status";
         String oldNOfVisitedPagesKey="TrafficLog:"+ip+":numberOfVisitedPages";
         String newStatusKey="TrafficLog:"+username+":status";
