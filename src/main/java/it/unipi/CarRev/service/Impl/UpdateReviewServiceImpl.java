@@ -66,6 +66,10 @@ public class UpdateReviewServiceImpl {
                 Criteria.where("Other_review._id").is(objReviewId)
         ));
         Car oldCar=mongoTemplate.findOne(query,Car.class);
+        if(oldCar==null){
+            System.out.println("The car doesent exists anymore");
+            return;
+        }
         Document review=oldCar.getTopTenReview().stream()
                 .filter(embReview->embReview.get("_id").equals(objReviewId))
                 .findFirst().orElse(null);
@@ -101,6 +105,7 @@ public class UpdateReviewServiceImpl {
         Integer decrNum=oldMileage>0.0?-1:0;
         Integer incrNum=newMileage>0.0?1:0;
         //Integer upNum=reviewUpdateRequestDTO.getMileage()>0.0?1:0;
+        /*
         Document yearMapping;
         if(oldYear.equals(newYear)){
             yearMapping=new Document("$map",new Document()
@@ -125,7 +130,7 @@ public class UpdateReviewServiceImpl {
                                     "$$yearDocu"
                             ))
                     ))));
-        }
+        }*/
         AggregationUpdate update = AggregationUpdate.update()
                 .set("Top_Ten_Review").toValue(
                         new Document("$map", new Document()
@@ -142,10 +147,11 @@ public class UpdateReviewServiceImpl {
                                 ))))
                 )
                 .set("total_review_score").toValue(new Document("$add", Arrays.asList("$total_review_score", deltaScore)))
-                .set("general_rating").toValue(new Document("$divide", Arrays.asList("$total_review_score", "$number_of_reviews")))
-                .set("Product_Year").toValue(yearMapping);
+                .set("general_rating").toValue(new Document("$divide", Arrays.asList("$total_review_score", "$number_of_reviews")));
+               // .set("Product_Year").toValue(yearMapping);
 
         mongoTemplate.updateFirst(query,update,Car.class);
+        /*
         if(!oldYear.equals(reviewUpdateRequestDTO.getYear())){
             Query insertIfNew=new Query(
                     Criteria.where("Top_Ten_Review._id").is(objReviewId)
@@ -159,6 +165,7 @@ public class UpdateReviewServiceImpl {
             mongoTemplate.updateFirst(insertIfNew,new org.springframework.data.mongodb.core.query.Update().push("Product_Year",newYearDocu),Car.class);
 
         }
+         */
     System.out.println("review correctly modified in cars collection");
     }
     private Document recalculateYear(String variable,Double deltaMileage,Integer deltaNum){
@@ -186,7 +193,7 @@ public class UpdateReviewServiceImpl {
 
         Query query=new Query(Criteria.where("username").is(username).orOperator(
                 Criteria.where("reviews._id").is(objReviewId),
-                Criteria.where("otherReviews").is(objReviewId))
+                Criteria.where("otherReviews._id").is(objReviewId))
         );
         Document newDoc=new Document();
         newDoc.append("_id",objReviewId);

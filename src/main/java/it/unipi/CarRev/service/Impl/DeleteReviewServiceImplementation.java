@@ -162,6 +162,7 @@ public class DeleteReviewServiceImplementation{
                                 .then(ArithmeticOperators.Divide.valueOf("total_review_score").divideBy("number_of_reviews"))
                                 .otherwise(0)
                 );
+        /*
         if(year!=null){
             update=update.set("Product_Year").toValue(
                     new Document("$map",new Document()
@@ -184,6 +185,8 @@ public class DeleteReviewServiceImplementation{
                     )
             );
         }
+
+         */
                 /*
         Car oldCar=mongoTemplate.findOne(query,Car.class);
         Double score=oldCar.getTopTenReview().stream()
