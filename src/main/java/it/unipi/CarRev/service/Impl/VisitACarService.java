@@ -51,7 +51,7 @@ public class VisitACarService {
         Authentication auth= SecurityContextHolder.getContext().getAuthentication();
         if(auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)){
             String username=auth.getName();
-            //long matched = visitNeo4jDAO.mergeVisited(username, car);
+            long matched = visitNeo4jDAO.mergeVisited(username, car);
             saveRecentlyViewed(car,username);
 
         }

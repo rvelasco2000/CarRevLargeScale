@@ -48,12 +48,11 @@ public class DeleteACarServiceImpl {
                 //return -1;
                 throw new ResourceNotFoundException("this car do not exists in the dataset");
             }
-            /*
             int deleted = neo4jCarDeleteService.deleteCarProjection(oldCar.getId());
             if (deleted != 1) {
                 System.out.println("neo4j mismatch on delete: deleted=" + deleted);
-                return -2; //
             }
+            /*
             carDAO.deleteById(id);
 
              */
