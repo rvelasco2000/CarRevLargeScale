@@ -52,16 +52,19 @@ public class DeleteReviewServiceImplementation{
     @Transactional("mongoTransactionManager")
     public void deleteAReview(String reviewId){
         Authentication auth= SecurityContextHolder.getContext().getAuthentication();
+        Boolean isAdmin=false;
         String username=null;
-        if(auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
+        if(auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)){
             username = auth.getName();
             System.out.println("username="+username);
+            isAdmin = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         }
         else{
             throw new RuntimeException("User must be authenticated");
         }
        // Double rating=fetchScore(reviewId);
-        Boolean result=deleteInUser(reviewId,username);
+        Boolean result=deleteInUser(reviewId,username,isAdmin);
         if(!result){
             System.out.println("user:"+username+" does not own the review");
             throw new ResourceNotFoundException("the user does not own this review");
@@ -119,7 +122,7 @@ public class DeleteReviewServiceImplementation{
         ));
         Car oldCar=mongoTemplate.findOne(query,Car.class);
         if(oldCar==null){
-            System.out.println("the car has been correctly deleted");
+            System.out.println("the car of this review has been deleted");
             return;
         }
         /*
@@ -230,12 +233,21 @@ public class DeleteReviewServiceImplementation{
         );
     }
      */
-    private Boolean deleteInUser(String reviewId,String username){
+    private Boolean deleteInUser(String reviewId,String username,Boolean isAdmin){
         ObjectId objReviewId=new ObjectId(reviewId);
-        Query query=new Query(Criteria.where("username").is(username).orOperator(
-                Criteria.where("reviews._id").is(objReviewId),
-                Criteria.where("otherReviews._id").is(objReviewId))
-        );
+        Query query=new Query();
+        if(isAdmin){
+            query.addCriteria(new Criteria().orOperator(
+                    Criteria.where("reviews._id").is(objReviewId),
+                    Criteria.where("otherReviews._id").is(objReviewId)
+            ));
+        }
+        else {
+            query.addCriteria(Criteria.where("username").is(username).orOperator(
+                    Criteria.where("reviews._id").is(objReviewId),
+                    Criteria.where("otherReviews._id").is(objReviewId))
+            );
+        }
         Update update=new Update()
                 .pull("reviews",new Document("_id",objReviewId))
                 .pull("otherReviews",new Document("_id",objReviewId));
@@ -243,7 +255,10 @@ public class DeleteReviewServiceImplementation{
         User user=mongoTemplate.findAndModify(query,update,FindAndModifyOptions.options().returnNew(true),User.class);
 
         if(user==null){
-            return false;
+            return isAdmin;
+        }
+        if(isAdmin){
+            username=user.getUsername();
         }
         if(user.getReviews().size()<10 && !user.getOtherReviews().isEmpty()){
             promoteReviewInUser(username,user.getOtherReviews().getLast().getObjectId("_id"),user.getOtherReviews().getLast().getInteger("likes"));

@@ -7,6 +7,7 @@ import it.unipi.CarRev.service.Impl.*;
 import it.unipi.CarRev.service.exception.ForbiddenException;
 import it.unipi.CarRev.service.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -25,13 +26,28 @@ public class AdminCarController {
     private final DeleteACarServiceImpl deleteACarService;
     private final GetReportedReviewsServiceImplementation getReportedReviewsServiceImplementation;
     private final ClearAReviewReportServiceImplementation clearAReviewReportServiceImplementation;
-    public AdminCarController(ProductYearRecomputeService productYearRecomputeService, InsertNewCarServiceImpl insertNewCarService, UpdateCarServiceImpl updateCarService,DeleteACarServiceImpl deleteACarService, GetReportedReviewsServiceImplementation getReportedReviewsServiceImplementation, ClearAReviewReportServiceImplementation clearAReviewReportServiceImplementation){
+    private final DeleteReviewServiceImplementation deleteReviewServiceImplementation;
+    public AdminCarController(ProductYearRecomputeService productYearRecomputeService, InsertNewCarServiceImpl insertNewCarService, UpdateCarServiceImpl updateCarService,DeleteACarServiceImpl deleteACarService, GetReportedReviewsServiceImplementation getReportedReviewsServiceImplementation, ClearAReviewReportServiceImplementation clearAReviewReportServiceImplementation,DeleteReviewServiceImplementation deleteReviewServiceImplementation){
         this.productYearRecomputeService = productYearRecomputeService;
         this.insertNewCarService=insertNewCarService;
         this.updateCarService=updateCarService;
         this.deleteACarService=deleteACarService;
         this.getReportedReviewsServiceImplementation=getReportedReviewsServiceImplementation;
         this.clearAReviewReportServiceImplementation=clearAReviewReportServiceImplementation;
+        this.deleteReviewServiceImplementation=deleteReviewServiceImplementation;
+    }
+    @GetMapping("/deleteReview")
+    public ResponseEntity<String> deleteReview(@NotNull @RequestParam String reviewId){
+        try {
+            deleteReviewServiceImplementation.deleteAReview(reviewId);
+            return ResponseEntity.ok("reviews correctly deleted");
+        }
+        catch(ResourceNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        catch (Exception e){
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
 
     @PostMapping("/insert")
