@@ -4,6 +4,8 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import it.unipi.CarRev.dao.mongo.ReviewDAO;
 import it.unipi.CarRev.dao.mongo.UserDAO;
+import it.unipi.CarRev.dao.neo4j.DeleteUserNeo4jDAO;
+import it.unipi.CarRev.service.Impl.DeleteUserneo4jImpl;
 import it.unipi.CarRev.model.Car;
 import it.unipi.CarRev.model.Review;
 import it.unipi.CarRev.model.User;
@@ -28,9 +30,11 @@ import java.util.List;
 public class DeleteUserServiceImplementation {
     private final UserDAO userDAO;
     private final MongoTemplate mongoTemplate;
-    public DeleteUserServiceImplementation(UserDAO userDAO, MongoTemplate mongoTemplate){
+    private final DeleteUserNeo4jDAO deleteuserneo4jdao;
+    public DeleteUserServiceImplementation(UserDAO userDAO, MongoTemplate mongoTemplate ,DeleteUserNeo4jDAO deleteuserneo4jdao){
         this.userDAO=userDAO;
         this.mongoTemplate=mongoTemplate;
+        this.deleteuserneo4jdao=deleteuserneo4jdao;
     }
     @Transactional("mongoTransactionManager")
     public void deleteAUser(){
@@ -44,6 +48,7 @@ public class DeleteUserServiceImplementation {
             throw new ForbiddenException("User must be authenticated");
         }
         User user=userDAO.findByUsername(username).orElse(null);
+        long deletedneo4 = deleteuserneo4jdao.deleteUser(username);
         if(user==null){
             throw new ResourceNotFoundException("the user does not exists");
         }

@@ -1,0 +1,195 @@
+\section{Neo4j Services}
+
+This section describes the Neo4j service layer responsible for managing the graph
+representation of cars and implementing the recommendation system in Car-Rev.
+The graph database is used for structural relationships and similarity-based
+computations, while MongoDB stores the main document data.
+
+\subsection{Graph Model Overview}
+
+The graph database contains the following main node types:
+
+\begin{itemize}
+    \item \textbf{Car}
+    \item \textbf{Brand}
+    \item \textbf{Model}
+    \item \textbf{BodyType}
+    \item \textbf{DriveWheels}
+    \item \textbf{Transmission}
+    \item \textbf{FuelType}
+    \item \textbf{Year}
+    \item \textbf{PriceBin}
+    \item \textbf{DispBin}
+    \item \textbf{User}
+\end{itemize}
+
+The main relationships are:
+
+\begin{itemize}
+    \item \texttt{ (:Car)-[:OF_BRAND]->(:Brand)}
+    \item \texttt{(:Car)-[:OF_MODEL]->(:Model)}
+    \item \texttt{(:Car)-[:HAS_BODY_TYPE]->(:BodyType)}
+    \item \texttt{(:Car)-[:HAS_DRIVE]->(:DriveWheels)}
+    \item \texttt{(:Car)-[:HAS_TRANSMISSION]->(:Transmission)}
+    \item \texttt{(:Car)-[:USES_FUEL]->(:FuelType)}
+    \item \texttt{(:Car)-[:OF_YEAR]->(:Year)}
+    \item \texttt{(:Car)-[:HAS_PRICE_BIN]->(:PriceBin)}
+    \item \texttt{(:Car)-[:HAS_DISPLACEMENT_BIN]->(:DispBin)}
+    \item \texttt{(:User)-[:HAS_VISITED]->(:Car)}
+\end{itemize}
+
+The bin nodes (PriceBin and DispBin) allow grouping cars into ranges in order to
+improve similarity computation.
+
+\subsection{Neo4jCarInsertService}
+
+This service is responsible for creating the graph projection of a car when a new
+vehicle is inserted into the system.
+
+\subsubsection*{Responsibilities}
+
+\begin{itemize}
+    \item Create a \texttt{Car} node identified by \texttt{mongo\_id}.
+    \item Normalize string attributes (lowercase standardization).
+    \item Merge or create structural dimension nodes (Brand, Model, etc.).
+    \item Attach bin nodes based on numeric ranges.
+\end{itemize}
+
+\subsubsection*{Design Rationale}
+
+Instead of storing all attributes directly inside the Car node only,
+categorical features are externalized into dedicated nodes. This allows:
+
+\begin{itemize}
+    \item Efficient similarity matching via shared neighbors.
+    \item Reduced duplication of categorical values.
+    \item Future graph-based clustering.
+\end{itemize}
+
+Price and displacement bins are matched using range-based queries,
+ensuring each car belongs to at most one bin per category.
+
+\subsection{Neo4jCarDeleteService}
+
+This service removes a car projection from the graph database.
+
+\subsubsection*{Responsibilities}
+
+\begin{itemize}
+    \item Match the \texttt{Car} node by \texttt{mongo\_id}.
+    \item Remove the node using \texttt{DETACH DELETE}.
+    \item Return the number of deleted nodes.
+\end{itemize}
+
+\subsubsection*{Consistency Considerations}
+
+The graph projection is deleted independently from MongoDB.
+The operation assumes that MongoDB deletion has already occurred or will occur
+in a coordinated workflow.
+
+Since Neo4j does not manage cascading consistency with MongoDB,
+eventual consistency is accepted between the two systems.
+
+\subsection{Neo4jUpdateService}
+
+This service updates the graph projection of a car when its attributes change.
+
+\subsubsection*{Responsibilities}
+
+\begin{itemize}
+    \item Match the existing Car node by \texttt{mongo\_id}.
+    \item Update scalar properties.
+    \item Remove outdated relationships.
+    \item Recompute and reattach dimension and bin relationships.
+\end{itemize}
+
+\subsubsection*{Update Strategy}
+
+The update follows a two-phase logic:
+
+\begin{enumerate}
+    \item Update node properties.
+    \item Delete and recreate structural relationships.
+\end{enumerate}
+
+This ensures the graph remains aligned with the most recent
+car specifications.
+
+\subsubsection*{Trade-offs}
+
+The deletion and recreation approach simplifies logic but
+temporarily removes relationships during execution.
+Given the transactional nature of Neo4j write operations,
+this does not produce visible intermediate inconsistencies.
+
+\subsection{Neo4jRecommendationService}
+
+This service implements the content-based recommendation engine
+using graph traversal and structural similarity.
+
+\subsubsection*{Recommendation Logic}
+
+For a given user:
+
+\begin{enumerate}
+    \item Retrieve visited cars.
+    \item Use each visited car as a seed.
+    \item Find candidate cars sharing structural nodes:
+    \begin{itemize}
+        \item same BodyType
+        \item same DriveWheels
+        \item same Transmission
+        \item same FuelType
+        \item same PriceBin
+        \item same DispBin
+    \end{itemize}
+    \item Exclude already visited cars.
+    \item Exclude cars of the same brand.
+    \item Apply numeric tolerance constraints:
+    \begin{itemize}
+        \item price within ±20\%
+        \item displacement within ±0.4L
+    \end{itemize}
+    \item Rank by:
+    \begin{itemize}
+        \item number of shared features (descending)
+        \item price difference (ascending)
+        \item displacement difference (ascending)
+    \end{itemize}
+    \item Return top-k results.
+\end{enumerate}
+
+\subsubsection*{Design Rationale}
+
+The recommendation strategy is:
+
+\begin{itemize}
+    \item Content-based.
+    \item Deterministic.
+    \item Fully explainable.
+\end{itemize}
+
+Unlike collaborative filtering approaches,
+this method does not rely on global user similarity
+but on structural proximity in the feature graph.
+
+\subsection{Architectural Role of Neo4j}
+
+Neo4j is used exclusively for:
+
+\begin{itemize}
+    \item Feature-based similarity.
+    \item User-visit tracking.
+    \item Efficient traversal over categorical features.
+\end{itemize}
+
+All heavy document storage remains in MongoDB,
+while Redis handles real-time counters and caching.
+
+This separation ensures:
+
+\begin{itemize}
+    \item Scalability of read-heavy operations.
+    \item Reduced duplication.
+    \item Clear domain separation between storage models.
+\end{itemize}
