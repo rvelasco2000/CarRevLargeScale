@@ -1,6 +1,7 @@
 package it.unipi.CarRev.service.Impl;
 
 
+import com.mongodb.bulk.BulkWriteResult;
 import it.unipi.CarRev.config.RedisConfig;
 import it.unipi.CarRev.model.Car;
 import it.unipi.CarRev.model.Review;
@@ -42,15 +43,16 @@ public class ScheduledUpdateLikesImplementation {
             for (String key : allKeys) {
                 String reviewId = key.split(":")[1];
                 ObjectId reviewIdObj= new ObjectId(reviewId);
-                Integer numOfLikes=Integer.valueOf(jedis.setGet(key,"0"));
+                Integer numOfLikes=Integer.valueOf(jedis.getSet(key,"0"));
                 if(numOfLikes==0){
                     continue;
                 }
+                System.out.println("numberOfLikes: "+numOfLikes);
                 /*
                 Query reviewQuery=new Query(Criteria.where("id").is(reviewId));
                 Update reviewUpdate=new Update().inc("likes",numOfLikes);
                  */
-
+                /*
                 Query userQuery=new Query(new Criteria().orOperator(
                         Criteria.where("reviews._id").is(reviewIdObj),
                         Criteria.where("otherReviews._id").is(reviewIdObj)
@@ -76,12 +78,33 @@ public class ScheduledUpdateLikesImplementation {
                // reviewOps.updateOne(reviewQuery,reviewUpdate);
                 userOps.updateOne(userQuery,userUpdate);
                 carOps.updateOne(carQuery,carUpdate);
+
+                 */
+
+                userOps.updateOne(
+                        new Query(Criteria.where("reviews._id").is(reviewIdObj)),
+                        new Update().inc("reviews.$.likes", numOfLikes)
+                );
+                userOps.updateOne(
+                        new Query(Criteria.where("otherReviews._id").is(reviewIdObj)),
+                        new Update().inc("otherReviews.$.likes", numOfLikes)
+                );
+                carOps.updateOne(
+                        new Query(Criteria.where("Top_Ten_Review._id").is(reviewIdObj)),
+                        new Update().inc("Top_Ten_Review.$.likes", numOfLikes)
+                );
+                carOps.updateOne(
+                        new Query(Criteria.where("Other_review._id").is(reviewIdObj)),
+                        new Update().inc("Other_review.$.likes", numOfLikes)
+                );
                 hasOps=true;
             }
             if(hasOps){
                // reviewOps.execute();
-                userOps.execute();
-                carOps.execute();
+                BulkWriteResult userResult=userOps.execute();
+                BulkWriteResult carResult = carOps.execute();
+                System.out.println("USER: Matchati=" + userResult.getMatchedCount() + ", Modificati=" + userResult.getModifiedCount());
+                System.out.println("CAR: Matchati=" + carResult.getMatchedCount() + ", Modificati=" + carResult.getModifiedCount());
                 System.out.println("migration of likes from redis to mongoDB has been successful");
             }
             for(String key: allKeys){
