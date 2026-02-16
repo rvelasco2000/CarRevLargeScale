@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 //test
 @Service
-@Async
 public class Neo4jUpdateService {
 
     public enum UpdateOutcome { OK, NOT_FOUND, ERROR }
