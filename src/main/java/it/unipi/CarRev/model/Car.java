@@ -62,7 +62,6 @@ public class Car {
 
     @Field("views")
     private Long views;
-
     @Field("productYear")
     private List<org.bson.Document> productYear;
 
