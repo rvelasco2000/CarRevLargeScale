@@ -23,15 +23,16 @@ public class FullCarInfoDTO {
     private Double priceNew;
     private Double generalRating;
     private List<Document> topTenReview;
-    private List<Document> otherReview;
-    private List<String> sales;
+   // private List<Document> otherReview;
+   // private List<String> sales;
+    private Integer productionYear;
     private Long views;
     private List<?> productYear;
 
     public FullCarInfoDTO() {
     }
 
-    public FullCarInfoDTO(String id, String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<Document> topTenReview, List<Document> otherReview, List<String> sales, Long views, List<?> productYear) {
+    public FullCarInfoDTO(String id, String carName, String carBrand, String carModel, String bodyType, String driveWheels, Double engineDisplacement, Integer numberOfCylinders, String transmissionType, Integer horsePower, String fuelType, Integer seatCapacity, Double priceNew, Double generalRating, List<Document> topTenReview, List<Document> otherReview, List<String> sales, Long views, List<?> productYear, Integer productionYear) {
         this.id = id;
         this.carName = carName;
         this.carBrand = carBrand;
@@ -47,8 +48,9 @@ public class FullCarInfoDTO {
         this.priceNew = priceNew;
         this.generalRating = generalRating;
         this.topTenReview = topTenReview;
-        this.otherReview = otherReview;
-        this.sales = sales;
+        this.productionYear=productionYear;
+       // this.otherReview = otherReview;
+        //this.sales = sales;
         this.views = views;
         this.productYear = productYear;
     }

@@ -38,6 +38,7 @@ public class CarUtils {
                     }).toList();
             dto.setTopTenReview(readableReviews);
         }
+        /*
         if(car.getOtherReview()!=null){
            List<Document> readableOtherReviews=car.getOtherReview().stream()
                    .map(doc->{
@@ -49,8 +50,10 @@ public class CarUtils {
                    }).toList();
             dto.setOtherReview(readableOtherReviews);
         }
+         */
         //dto.setOtherReview(car.getOtherReview());
-        dto.setSales(car.getSales());
+        //dto.setSales(car.getSales());
+        dto.setProductionYear(car.getProduction_year());
         dto.setViews(car.getViews());
         //dto.setProductYear(car.getProductYear());
         if(car.getProductYear()!=null){
