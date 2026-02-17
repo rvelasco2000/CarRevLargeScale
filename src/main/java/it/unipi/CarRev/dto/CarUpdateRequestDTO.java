@@ -21,5 +21,5 @@ public class CarUpdateRequestDTO {
     private String fuelType;
     private Integer seatCapacity;
     private Double priceNew;
-    private Integer productionYear;
+    private Integer production_year;
 }
