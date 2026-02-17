@@ -94,6 +94,7 @@ public class UpdateReviewServiceImpl {
         Double newScore=reviewUpdateRequestDTO.getRating()!=null? reviewUpdateRequestDTO.getRating():oldScore;
         Double newMileage=reviewUpdateRequestDTO.getMileage()!=null?reviewUpdateRequestDTO.getMileage():oldMileage;
         Integer newYear=reviewUpdateRequestDTO.getYear()!=null?reviewUpdateRequestDTO.getYear():oldYear;
+
         if(newYear<oldCar.getProduction_year()){
             throw new BadRequestException("you cannot update a review to a year before production_year");
         }

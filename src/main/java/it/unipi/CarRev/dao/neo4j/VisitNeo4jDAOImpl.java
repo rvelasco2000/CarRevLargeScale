@@ -14,29 +14,34 @@ public class VisitNeo4jDAOImpl implements VisitNeo4jDAO {
     }
 
     public long mergeVisited(String username, Car car) {
-        return neo4j.query("""
-MERGE (u:User {username: toLower($username)})
-WITH u
-
-MATCH (c:Car)
-WHERE
-  c.mongo_id=$mongo_id
-
-
-MERGE (u)-[v:HAS_VISITED]->(c)
-SET v.lastSeen = datetime()
- WITH u
- MATCH (u)-[old:HAS_VISITED]->(:Car)
- WITH u, old
- ORDER BY old.lastSeen DESC
- SKIP 5
- DELETE old;
-        """)
-                .bind(username).to("username")
-                .bind(car.getId()).to("mongo_id")
-                .fetchAs(Long.class)
-                .mappedBy((ts, r) -> r.get("matched").asLong())
-                .one()
-                .orElse(0L);
+        try {
+            return neo4j.query("""
+                            MERGE (u:User {username: toLower($username)})
+                            WITH u
+                            
+                            MATCH (c:Car)
+                            WHERE
+                              c.mongo_id=$mongo_id
+                            
+                            
+                            MERGE (u)-[v:HAS_VISITED]->(c)
+                            SET v.lastSeen = datetime()
+                             WITH u
+                             MATCH (u)-[old:HAS_VISITED]->(:Car)
+                             WITH u, old
+                             ORDER BY old.lastSeen DESC
+                             SKIP 5
+                             DELETE old;
+                            """)
+                    .bind(username).to("username")
+                    .bind(car.getId()).to("mongo_id")
+                    .fetchAs(Long.class)
+                    .mappedBy((ts, r) -> r.get("matched").asLong())
+                    .one()
+                    .orElse(0L);
+        } catch (Exception e) {
+            System.err.println("error during ne04j visit: " + e.getMessage());
+            return -1;
+        }
     }
 }
