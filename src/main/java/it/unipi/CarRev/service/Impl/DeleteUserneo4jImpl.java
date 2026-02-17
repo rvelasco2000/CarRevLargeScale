@@ -26,7 +26,14 @@ public class DeleteUserneo4jImpl implements DeleteUserNeo4jDAO {
     @Override
 
     public long deleteUser(String username) {
-        var result=driver.executableQuery(cypher).withParameters(Map.of("username",username)).execute();
-        return result.records().get(0).get("returned").asLong();
-    }
-}
+        var result = driver.executableQuery(cypher)
+                .withParameters(Map.of("username", username))
+                .execute();
+
+        var records = result.records();
+        if (records.isEmpty()) return 0L;
+
+        var v = records.get(0).get("returned");
+        if (v == null || v.isNull()) return 0L;
+
+        return v.asLong();}}
