@@ -94,8 +94,13 @@ public class UpdateReviewServiceImpl {
         Double newScore=reviewUpdateRequestDTO.getRating()!=null? reviewUpdateRequestDTO.getRating():oldScore;
         Double newMileage=reviewUpdateRequestDTO.getMileage()!=null?reviewUpdateRequestDTO.getMileage():oldMileage;
         Integer newYear=reviewUpdateRequestDTO.getYear()!=null?reviewUpdateRequestDTO.getYear():oldYear;
-        if(newYear<oldCar.getProduction_year()){
-            throw new BadRequestException("you cannot update a review to a year before production_year");
+        if(newYear!=null){
+            if (newYear < oldCar.getProduction_year()) {
+                throw new BadRequestException("you cannot update a review to a year before production_year");
+            }
+        }
+        if (newYear == null && newMileage != 0.0) {
+            throw new BadRequestException("Cannot provide a mileage if the year is not specified");
         }
         Integer netChange=0;
         if (oldMileage == 0.0&&newMileage>0.0)netChange=1;
@@ -131,6 +136,15 @@ public class UpdateReviewServiceImpl {
                             ))
                     ))));
         }*/
+        Document fieldsToUpdate = new Document();
+        fieldsToUpdate.append("rating", newScore);
+        fieldsToUpdate.append("text", newText);
+        if (newYear != null) {
+            fieldsToUpdate.append("year", newYear);
+        }
+        if (newMileage != null && newMileage != 0.0) {
+            fieldsToUpdate.append("mileage", newMileage);
+        }
         AggregationUpdate update = AggregationUpdate.update()
                 .set("Top_Ten_Review").toValue(
                         new Document("$map", new Document()
@@ -138,11 +152,7 @@ public class UpdateReviewServiceImpl {
                                 .append("as", "rev")
                                 .append("in", new Document("$cond", Arrays.asList(
                                         new Document("$eq", Arrays.asList("$$rev._id", objReviewId)),
-                                        new Document("$mergeObjects", Arrays.asList("$$rev", new Document()
-                                                .append("rating", newScore)
-                                                .append("text", newText)
-                                                .append("mileage", newMileage)
-                                                .append("year", newYear))),
+                                        new Document("$mergeObjects", Arrays.asList("$$rev", fieldsToUpdate)),
                                         "$$rev"
                                 ))))
                 )

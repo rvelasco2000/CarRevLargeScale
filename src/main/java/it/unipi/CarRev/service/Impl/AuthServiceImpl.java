@@ -1,5 +1,7 @@
 package it.unipi.CarRev.service.Impl;
 
+import com.mongodb.ReadPreference;
+import com.mongodb.client.model.Filters;
 import it.unipi.CarRev.config.JwtService;
 import it.unipi.CarRev.config.RedisConfig;
 import it.unipi.CarRev.dao.mongo.UserDAO;
@@ -8,6 +10,9 @@ import it.unipi.CarRev.dto.LoginResponse;
 import it.unipi.CarRev.model.User;
 import it.unipi.CarRev.service.AuthService;
 import it.unipi.CarRev.utils.UtilsForDate;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
@@ -22,18 +27,21 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenDAO refreshTokenDAO;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final MongoTemplate mongoTemplate;
 
     public AuthServiceImpl(
             UserDAO userDAO,
             RefreshTokenDAO refreshTokenDAO,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            BotDetectionService botDetectionService) {
+            BotDetectionService botDetectionService,
+            MongoTemplate mongoTemplate) {
         this.userDAO = userDAO;
         this.refreshTokenDAO = refreshTokenDAO;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.botDetectionService=botDetectionService;
+        this.mongoTemplate=mongoTemplate;
     }
 
     @Override
@@ -56,7 +64,15 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setAdmin(false);
 
-        user = userDAO.save(user);
+        //user = userDAO.save(user);
+        User userToSave = user;
+        user = mongoTemplate.execute(User.class, collection -> {
+            org.bson.Document doc = new org.bson.Document();
+            mongoTemplate.getConverter().write(userToSave, doc);
+            collection.withWriteConcern(com.mongodb.WriteConcern.MAJORITY)
+                    .insertOne(doc);
+            return mongoTemplate.getConverter().read(User.class, doc);
+        });
         updateRegisteredUser();
         return issueTokens(user);
     }
@@ -72,9 +88,20 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse login(String username, String password,String ip) {
-        User user = userDAO.findByUsername(username)
+       /* User user = userDAO.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
+        */
+        User user = mongoTemplate.execute(User.class, collection -> {
+            org.bson.Document doc = collection.withReadPreference(ReadPreference.primaryPreferred())
+                    .find(new org.bson.Document("username", username))
+                    .first();
+            if (doc == null) return null;
+            return mongoTemplate.getConverter().read(User.class, doc);
+        });
+        if(user==null){
+            throw new RuntimeException("Invalid credentials");
+        }
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new RuntimeException("Invalid credentials");
         }

@@ -25,13 +25,13 @@ public class TrafficForInfoServiceImpl {
 
     @Scheduled(cron="0 0 0 * * *")
     public void dailyTrafficInfoTransfer(){
-        String yesterdayDate= UtilsForDate.getYesterdayDate();
+        //String yesterdayDate= UtilsForDate.getYesterdayDate();
         //uncomment this to test the application
-        //String yesterdayDate=UtilsForDate.getDate();
+        String yesterdayDate=UtilsForDate.getDate(); //in the real application this must call yesterday date but for the sake of testing it will take todays date
         String nOfLegitimateUserKey="TrafficLog:"+yesterdayDate+":legitimate";
         String nOfSuspiciousUserKey="TrafficLog:"+yesterdayDate+":suspicious";
-        String nOfRegisteredUserKey="TrafficLog:"+UtilsForDate.getDate()+":nOfRegisteredUser";
-        String nOfUnregisteredVisitorKey="TrafficLog:"+ UtilsForDate.getDate()+":numberOfUnregisteredUsers";
+        String nOfRegisteredUserKey="TrafficLog:"+yesterdayDate+":nOfRegisteredUser";
+        String nOfUnregisteredVisitorKey="TrafficLog:"+yesterdayDate+":numberOfUnregisteredUsers";
         try(Jedis jedis= RedisConfig.getJedis()){
             String nOfLegitimateUser=jedis.get(nOfLegitimateUserKey);
             if(nOfLegitimateUser==null){
@@ -51,7 +51,7 @@ public class TrafficForInfoServiceImpl {
             }
 
             TrafficForAnalytics trafficForAnalytics=new TrafficForAnalytics(Integer.valueOf(nOfLegitimateUser),Integer.valueOf(nOfSuspiciousUser),yesterdayDate);
-            UserBasedAnalytics userBasedAnalytics=new UserBasedAnalytics(Integer.valueOf(nOfRegisteredUser),Integer.valueOf(nOfUnregisteredUsers),UtilsForDate.getDate());
+            UserBasedAnalytics userBasedAnalytics=new UserBasedAnalytics(Integer.valueOf(nOfRegisteredUser),Integer.valueOf(nOfUnregisteredUsers),yesterdayDate);
             trafficForAnalyticsDAO.save(trafficForAnalytics);
             userBasedAnalyticsDAO.save(userBasedAnalytics);
             jedis.del(nOfLegitimateUserKey);

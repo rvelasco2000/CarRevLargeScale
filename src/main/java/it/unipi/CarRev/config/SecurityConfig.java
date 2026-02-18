@@ -44,6 +44,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/user/**"
                         ).authenticated()
+                        .requestMatchers(
+                                "/api/test/scheduled/**"
+                        ).permitAll() //for testing in real life application we will not have this
                         .requestMatchers(HttpMethod.GET, "/api/test/neo4j/ping").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/test/neo4j/car").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/test/neo4j/recommend").permitAll()
@@ -57,7 +60,9 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/cars",
-                                "/api/cars/visitCar").permitAll()
+                                "/api/cars/visitCar",
+                                "/api/cars/mostLikedReviews",
+                                "/api/cars/otherReviews").permitAll()
                         .requestMatchers("/api/cars/logged/lastFive").authenticated()
 
                         .anyRequest().authenticated()

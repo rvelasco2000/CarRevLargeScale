@@ -61,8 +61,10 @@ public class DeleteACarServiceImpl {
            // return 0;
 
         }
+        catch (ResourceNotFoundException e) {
+            throw e;
+        }
         catch(Exception e){
-
             System.out.println("an error has occurred during the delete of a car");
             e.printStackTrace();
             throw new RuntimeException("an error has occurred during the delete of a car");

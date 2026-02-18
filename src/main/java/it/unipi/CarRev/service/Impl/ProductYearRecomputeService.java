@@ -87,7 +87,7 @@ public class ProductYearRecomputeService {
                         double avgPrice = agg.totalPrice / agg.count;
                         Map<String, Object> row = new LinkedHashMap<>();
                         row.put("Year", year);
-                        row.put("Average_used_milage", (int) Math.round(avgMileage));
+                        row.put("Average_used_mileage", (int) Math.round(avgMileage));
                         row.put("Average_used_price", avgPrice);
                         row.put("Sales_count", agg.count);
                         productYearList.add(row);

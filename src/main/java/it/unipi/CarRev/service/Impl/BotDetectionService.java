@@ -14,16 +14,25 @@ public class BotDetectionService {
     private final Pattern IPV4REGEX= Pattern.compile("^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})$");
 
     private static final int EXPIRESTATUSKEY=86400; /*the key will expire after a day*/
-   private static final int EXPIRENOFVISITEDPAGES=1; /*change this if not working*/
+    //this field shoul be final but for the sake of testing is not
+   //private static int EXPIRENOFVISITEDPAGES=1; /*change this if not working*/
    // private static final int EXPIRENOFVISITEDPAGES=600; //uncomment this and comment the one above for testing
-    private static final int TRESHOLD=100;
+    //this field should be final but for the sake of testing is not
+    //private static int TRESHOLD=100;
     //private static final int TRESHOLD=4; //uncomment this and comment the one above for testing
     public Boolean checkForBot(String idUser){
+        //this 2 data should be globally declared but for sake of testing its not
+        int EXPIRENOFVISITEDPAGES=1;
+        int TRESHOLD=100;
         String statusKey="TrafficLog:"+idUser+":status";
         String nOfVisitedPagesKey="TrafficLog:"+idUser+":numberOfVisitedPages";
         String nOfLegitimateUserKey="TrafficLog:"+ UtilsForDate.getDate()+":legitimate";
         String nOfSuspiciusUserKey="TrafficLog:"+UtilsForDate.getDate()+":suspicious";
         String nOfUnregisteredVisitorKey="TrafficLog:"+UtilsForDate.getDate()+":numberOfUnregisteredUsers";
+        if("bot".equals(idUser)){
+            EXPIRENOFVISITEDPAGES=600;
+            TRESHOLD=4;
+        }
         try(Jedis jedis=RedisConfig.getJedis()){
             String currentStatus=jedis.get(statusKey);
             if(currentStatus!=null && currentStatus.equals("suspicious")){
@@ -40,11 +49,23 @@ public class BotDetectionService {
             }
             String nOfVisitedPagePresent= jedis.set(nOfVisitedPagesKey,"0", SetParams.setParams().nx().ex(EXPIRENOFVISITEDPAGES));
             Long currentValue=jedis.incr(nOfVisitedPagesKey);
+            if (currentValue==1){
+                jedis.expire(nOfVisitedPagesKey, EXPIRENOFVISITEDPAGES);
+            }
+            System.out.println("current value:"+currentValue);
             if(currentValue>TRESHOLD){
+                /*
                 jedis.set(statusKey,"suspicious",SetParams.setParams().keepttl());
                 jedis.incr(nOfSuspiciusUserKey);
                 jedis.decr(nOfLegitimateUserKey);
                 return false;
+                 */
+                String previousStatus = jedis.getSet(statusKey, "suspicious");
+                if (!"suspicious".equals(previousStatus)) {
+                    jedis.incr(nOfSuspiciusUserKey);
+                    jedis.decr(nOfLegitimateUserKey);
+                    jedis.expire(statusKey, EXPIRESTATUSKEY);
+                }
             }
             return true;
         }
@@ -54,6 +75,7 @@ public class BotDetectionService {
         }
     }
     public void mapIpToUsername(String username,String ip){
+        System.out.println(ip);
         String oldStatusKey="TrafficLog:"+ip+":status";
         String oldNOfVisitedPagesKey="TrafficLog:"+ip+":numberOfVisitedPages";
         String newStatusKey="TrafficLog:"+username+":status";
