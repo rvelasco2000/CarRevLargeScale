@@ -72,7 +72,11 @@ public class DeleteReviewServiceImplementation{
         System.out.println("review correctly removed from users collection");
         deleteInCar(reviewId);
         System.out.println("review correctly removed from car collection");
-        reviewDAO.deleteById(reviewId);
+        Query deleteQuery = new Query(Criteria.where("_id").is(new ObjectId(reviewId)));
+        com.mongodb.client.result.DeleteResult deleteResult = mongoTemplate.remove(deleteQuery, Review.class);
+        if (deleteResult.getDeletedCount() == 0) {
+            throw new ResourceNotFoundException("Review was already deleted");
+        }
         System.out.println("review correctly removed from reviews collection");
         //deleteScoreReviewAfterCommit(carId,rating);
         //System.out.println("correctly migrated deleted review info form mongoDB to redis");
@@ -122,7 +126,7 @@ public class DeleteReviewServiceImplementation{
         ));
         Car oldCar=mongoTemplate.findOne(query,Car.class);
         if(oldCar==null){
-            System.out.println("the car of this review has been deleted");
+            System.out.println("the car of this review has been deleted or the review is missing");
             return;
         }
         /*
@@ -278,8 +282,8 @@ public class DeleteReviewServiceImplementation{
                 .append("text",review.getText())
                 .append("rating",review.getRating())
                 .append("timestamp",review.getTimestamp())
-                .append("likes",likes)
-                .append("report",review.getReport());
+                .append("likes",likes);
+               // .append("report",review.getReport());
         if(review.getYear()!=null){
             newReview.append("year",review.getYear());
         }
@@ -304,8 +308,8 @@ public class DeleteReviewServiceImplementation{
                 .append("text",review.getText())
                 .append("rating",review.getRating())
                 .append("timestamp",review.getTimestamp())
-                .append("likes",likes)
-                .append("report",review.getReport());
+                .append("likes",likes);
+                //.append("report",review.getReport());
         if(review.getYear()!=null){
             toInputReview.append("year",review.getYear());
         }

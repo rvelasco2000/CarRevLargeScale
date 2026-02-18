@@ -25,9 +25,9 @@ public class TrafficForInfoServiceImpl {
 
     @Scheduled(cron="0 0 0 * * *")
     public void dailyTrafficInfoTransfer(){
-        String yesterdayDate= UtilsForDate.getYesterdayDate();
+        //String yesterdayDate= UtilsForDate.getYesterdayDate();
         //uncomment this to test the application
-        //String yesterdayDate=UtilsForDate.getDate();
+        String yesterdayDate=UtilsForDate.getDate(); //in the real application this must call yesterday date but for the sake of testing it will take todays date
         String nOfLegitimateUserKey="TrafficLog:"+yesterdayDate+":legitimate";
         String nOfSuspiciousUserKey="TrafficLog:"+yesterdayDate+":suspicious";
         String nOfRegisteredUserKey="TrafficLog:"+yesterdayDate+":nOfRegisteredUser";

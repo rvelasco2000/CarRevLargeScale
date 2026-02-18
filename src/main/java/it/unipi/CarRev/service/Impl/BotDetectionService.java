@@ -49,6 +49,9 @@ public class BotDetectionService {
             }
             String nOfVisitedPagePresent= jedis.set(nOfVisitedPagesKey,"0", SetParams.setParams().nx().ex(EXPIRENOFVISITEDPAGES));
             Long currentValue=jedis.incr(nOfVisitedPagesKey);
+            if (currentValue==1){
+                jedis.expire(nOfVisitedPagesKey, EXPIRENOFVISITEDPAGES);
+            }
             System.out.println("current value:"+currentValue);
             if(currentValue>TRESHOLD){
                 /*
