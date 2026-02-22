@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"data":{"$numberInt":"1"}},"name":"data"}],"uuid":"16c914374da247d897d64ce45e5c995f","collectionName":"CarAnalytics","type":"collection"}
