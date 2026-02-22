@@ -1,5 +1,5 @@
 first of all you have to setup neo 4j 
-1.insert the file car_data_filtered.csv in the import folder
+1.insert the file cars_flat.csv in the import folder
 insert this query:"//
 //
 MATCH (n) DETACH DELETE n;
@@ -39,7 +39,7 @@ FOR (b:PriceBin) REQUIRE (b.min, b.max) IS UNIQUE;
 CREATE CONSTRAINT dispbin_unique IF NOT EXISTS
 FOR (b:DispBin) REQUIRE (b.min, b.max) IS UNIQUE;
 //
-LOAD CSV WITH HEADERS FROM "file:///car_data_filtered.csv" AS row
+LOAD CSV WITH HEADERS FROM "file:///cars_flat.csv" AS row
 CALL {
   WITH row
   WITH
@@ -220,7 +220,7 @@ car_brand: "bmw",
     price_new: 42864
 }
 ];
-:param seedPerClick => 3;
+
 :param pricePct => 0.20;
 :param dispDelta => 0.4;
 :param k => 20;
@@ -231,62 +231,70 @@ car_brand: "bmw",
 4.This is the main query :"
 UNWIND $clicks AS click
 
-        MATCH (seed:Car)
-        WHERE
-          toLower(seed.car_brand) = toLower(click.car_brand) AND
-          toLower(seed.car_model) = toLower(click.car_model) AND
-          (click.production_year IS NULL OR seed.production_year = click.production_year) AND
-          (click.fuel_type IS NULL OR toLower(seed.fuel_type) = toLower(click.fuel_type)) AND
-          (click.transmission_type IS NULL OR toLower(seed.transmission_type) = toLower(click.transmission_type)) AND
-          (click.body_type IS NULL OR toLower(seed.body_type) = toLower(click.body_type)) AND
-          (click.drive_wheels IS NULL OR toLower(seed.drive_wheels) = toLower(click.drive_wheels)) AND
-          (click.engine_displacement IS NULL OR
-             (seed.engine_displacement IS NOT NULL AND abs(seed.engine_displacement - click.engine_displacement) <= 0.05))
+ MATCH ( u : User { username : $username }) -[: HAS_VISITED ] - >( click : Car )
+WITH DISTINCT click
+MATCH ( seed : Car { mongo_id : click . mongo_id })
+MATCH ( seed ) -[: HAS_BODY_TYPE |: HAS_DRIVE |: HAS_TRANSMISSION |
+: USES_FUEL |: OF_BRAND |: OF_MODEL |
+: HAS_PRICE_BIN |: HAS_DISPLACEMENT_BIN ] - >( feat )
+MATCH ( cand : Car ) -[: HAS_BODY_TYPE |: HAS_DRIVE |: HAS_TRANSMISSION |
+: USES_FUEL |: OF_BRAND |: OF_MODEL |
+: HAS_PRICE_BIN |: HAS_DISPLACEMENT_BIN ] - >( feat )
+WHERE cand <> seed
+AND toLower ( coalesce ( cand . car_name , ’ ’) )
+<> toLower ( coalesce ( seed . car_name , ’ ’) )
+AND ( click . price_new IS NULL OR
+( cand . price_new IS NOT NULL AND
+cand . price_new >= click . price_new * (1 - $pricePct ) AND
+cand . price_new <= click . price_new * (1 + $pricePct ) ) )
+AND ( click . engine_displacement IS NULL OR
+( cand . engine_displacement IS NOT NULL AND
+cand . engine_displacement >= click . engine_displacement -
+$dispDelta AND
+cand . engine_displacement <= click . engine_displacement +
+$dispDelta ) )
+WITH
+97
+cand ,
+count ( DISTINCT feat ) AS shared_features ,
+avg ( CASE
+WHEN click . price_new IS NULL OR cand . price_new IS NULL
+THEN NULL
+ELSE abs ( cand . price_new - click . price_new )
+END ) AS avg_price_diff ,
+avg ( CASE
+WHEN click . engine_displacement IS NULL
+OR cand . engine_displacement IS NULL
+THEN NULL
+ELSE abs ( cand . engine_displacement - click . engine_displacement )
+END ) AS avg_disp_diff
+ORDER BY shared_features DESC ,
+avg_price_diff ASC ,
+avg_disp_diff ASC
+WITH
+cand . car_brand AS brand ,
+cand . car_model AS model ,
+head ( collect ( cand ) ) AS rep ,
+head ( collect ( shared_features ) ) AS shared_features ,
+head ( collect ( avg_price_diff ) ) AS avg_price_diff ,
+head ( collect ( avg_disp_diff ) ) AS avg_disp_diff
+RETURN
+rep . car_name AS car_name ,
+rep . car_brand AS car_brand ,
+rep . car_model AS car_model ,
+rep . mongo_id AS mongo_id ,
+rep . production_year AS production_year ,
+rep . price_new AS price_new ,
+rep . engine_displacement AS engine_displacement ,
+shared_features AS shared_features ,
+avg_price_diff AS avg_price_diff ,
+avg_disp_diff AS avg_disp_diff
+ORDER BY shared_features DESC ,
+avg_price_diff ASC ,
+avg_disp_diff ASC
+LIMIT $k
 
-        WITH click, seed
-        LIMIT $seedPerClick
-
-        MATCH (seed)-[:HAS_BODY_TYPE|:HAS_DRIVE|:HAS_TRANSMISSION|:USES_FUEL|:OF_BRAND|:OF_MODEL|:HAS_PRICE_BIN|:HAS_DISPLACEMENT_BIN]->(feat)
-        MATCH (cand:Car)-[:HAS_BODY_TYPE|:HAS_DRIVE|:HAS_TRANSMISSION|:USES_FUEL|:OF_BRAND|:OF_MODEL|:HAS_PRICE_BIN|:HAS_DISPLACEMENT_BIN]->(feat)
-        WHERE cand <> seed
-          AND toLower(cand.car_brand) <> toLower(seed.car_brand)
-
-        AND (click.price_new IS NULL OR (cand.price_new IS NOT NULL AND
-             cand.price_new >= click.price_new * (1 - $pricePct) AND
-             cand.price_new <= click.price_new * (1 + $pricePct)))
-
-        AND (click.engine_displacement IS NULL OR (cand.engine_displacement IS NOT NULL AND
-             cand.engine_displacement >= click.engine_displacement - $dispDelta AND
-             cand.engine_displacement <= click.engine_displacement + $dispDelta))
-
-        WITH
-          cand,
-          count(DISTINCT feat) AS shared_features,
-          avg(CASE WHEN click.price_new IS NULL OR cand.price_new IS NULL THEN NULL ELSE abs(cand.price_new - click.price_new) END) AS avg_price_diff,
-          avg(CASE WHEN click.engine_displacement IS NULL OR cand.engine_displacement IS NULL THEN NULL ELSE abs(cand.engine_displacement - click.engine_displacement) END) AS avg_disp_diff
-
-        ORDER BY shared_features DESC, avg_price_diff ASC, avg_disp_diff ASC
-
-        WITH
-          cand.car_brand AS brand,
-          cand.car_model AS model,
-          head(collect(cand)) AS rep,
-          head(collect(shared_features)) AS shared_features,
-          head(collect(avg_price_diff)) AS avg_price_diff,
-          head(collect(avg_disp_diff)) AS avg_disp_diff
-
-        RETURN
-          rep.car_name        AS car_name,
-          rep.car_brand       AS car_brand,
-          rep.car_model       AS car_model,
-          rep.production_year AS production_year,
-          rep.price_new       AS price_new,
-          rep.engine_displacement AS engine_displacement,
-          shared_features     AS shared_features,
-          avg_price_diff      AS avg_price_diff,
-          avg_disp_diff       AS avg_disp_diff
-        ORDER BY shared_features DESC, avg_price_diff ASC, avg_disp_diff ASC
-        LIMIT 5
 //
 
 "
+
