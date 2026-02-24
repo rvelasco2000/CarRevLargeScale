@@ -262,7 +262,6 @@ $dispDelta AND
 cand . engine_displacement <= click . engine_displacement +
 $dispDelta ) )
 WITH
-97
 cand ,
 count ( DISTINCT feat ) AS shared_features ,
 avg ( CASE
@@ -305,5 +304,6 @@ LIMIT $k
 //
 
 "
+
 
 
