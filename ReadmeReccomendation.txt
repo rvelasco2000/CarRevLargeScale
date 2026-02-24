@@ -11,6 +11,14 @@ CREATE INDEX car_price_idx IF NOT EXISTS FOR (c:Car) ON (c.price_new);
 CREATE INDEX car_disp_idx  IF NOT EXISTS FOR (c:Car) ON (c.engine_displacement);
 
 // ---- Dimension tables uniqueness
+CREATE CONSTRAINT car_mongo_id_unique IF NOT EXISTS
+FOR (c:Car)
+REQUIRE c.mongo_id IS UNIQUE;
+
+CREATE CONSTRAINT user_username_unique IF NOT EXISTS
+FOR (u:User)
+REQUIRE u.username IS UNIQUE;
+
 CREATE CONSTRAINT brand_unique IF NOT EXISTS
 FOR (b:Brand) REQUIRE b.name IS UNIQUE;
 
@@ -297,4 +305,5 @@ LIMIT $k
 //
 
 "
+
 
